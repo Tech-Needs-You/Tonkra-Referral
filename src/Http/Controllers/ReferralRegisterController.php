@@ -31,6 +31,7 @@ use Tonkra\Referral\Repositories\Contracts\ReferralAccountRepository;
 use Tonkra\Referral\Repositories\Contracts\ReferralSubscriptionRepository;
 use Tonkra\Referral\Services\ReferralRegistrationService;
 use Tonkra\Referral\Models\Referral;
+use Tonkra\Referral\Models\ReferralNotification;
 use Tonkra\Referral\Models\UserPreference;
 use Tonkra\Referral\Notifications\NewReferralNotification;
 
@@ -185,7 +186,7 @@ class ReferralRegisterController extends Controller
 			$isReferralEnabled = config('referral.status');
 			// add referrer if referral system is enabled
 			if ($isReferralEnabled && !($data['referrer'] == null || $data['referrer'] == '')) {
-				$referrer = Referral::getByReferralCode($data['referrer'])->user;
+				$referrer = Referral::getReferrerByReferralCode($data['referrer']);
 				$referral = Referral::create([
 					'user_id' => $user->id,
 					'referred_by' => $referrer->id,
@@ -193,8 +194,8 @@ class ReferralRegisterController extends Controller
 
 				Notifications::create([
 					'user_id'           => $referrer->id,
-					'notification_for'  => Notifications::FOR_CUSTOMER,
-					'notification_type' => Notifications::TYPE_NEW_REFERRAL,
+					'notification_for'  => ReferralNotification::FOR_CUSTOMER,
+					'notification_type' => ReferralNotification::TYPE_NEW_REFERRAL,
 					'message'           => 'New Referral Registered for ' . $user->displayName(),
 				]);
 
@@ -211,13 +212,13 @@ class ReferralRegisterController extends Controller
 						'app_name' => config('app.name'),
 					])
 				];
-				// TODO::check and send referral notifications
+				
 				// check and send referrer notifications
 				if ((bool)$referrer->preferences?->getPreference(UserPreference::KEY_REFERRAL)) {
 					if ((bool)$referrer->preferences?->getPreference(UserPreference::KEY_REFERRAL_EMAIL_NOTIFICATION)) {
 						$referrer->notify(new NewReferralNotification($user->user, route('user.account', ['tab' => 'referral'])));
 					}
-					
+
 					if ((bool)$referrer->preferences?->getPreference(UserPreference::KEY_REFERRAL_SMS_NOTIFICATION)) {
 						if ($send_data['recipient'] && $phoneHelper->validateInternationalNumber($referrer->user->customer->phone)) {
 							$this->campaigns->quickSend(new Campaigns(), $send_data);

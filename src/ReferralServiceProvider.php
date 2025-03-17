@@ -4,6 +4,8 @@ namespace Tonkra\Referral;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\File;
 use Tonkra\Referral\Http\Middleware\ReferralRedirectMiddleware;
 use Tonkra\Referral\Repositories\Contracts\ReferralAccountRepository;
 use Tonkra\Referral\Repositories\Contracts\ReferralBaseRepository;
@@ -33,11 +35,21 @@ class ReferralServiceProvider extends ServiceProvider
 		], 'config');
 
 		// Publish Migrations
+		// Publish Migrations
 		if ($this->app->runningInConsole()) {
 			$this->publishes([
 				__DIR__ . '/database/migrations/' => database_path('migrations'),
 			], 'referral-migrations');
+
+			// Publish Seeders
+			$this->publishes([
+				__DIR__ . '/database/seeders/' => database_path('seeders'),
+			], 'referral-seeders');
 		}
+
+		// Run Migrations and Seeder Automatically (Optional)
+		$this->runMigrations();
+		$this->runSeeder();
 
 		// Load Migrations
 		$this->loadMigrationsFrom(__DIR__ . '/database/migrations');
@@ -64,7 +76,8 @@ class ReferralServiceProvider extends ServiceProvider
 		$kernel->pushMiddleware(ReferralRedirectMiddleware::class);
 	}
 
-	protected function bindRepositoryContracts(){
+	protected function bindRepositoryContracts()
+	{
 
 		$this->app->bind(
 			ReferralUserRepository::class,
@@ -85,6 +98,29 @@ class ReferralServiceProvider extends ServiceProvider
 			ReferralSubscriptionRepository::class,
 			EloquentReferralSubscriptionRepository::class
 		);
+	}
 
+	/**
+	 * Automatically run the package migrations.
+	 */
+	protected function runMigrations()
+	{
+		$migrationPath = __DIR__ . '/database/migrations';
+
+		// Check if migration files exist before running
+		if (File::exists($migrationPath)) {
+			Artisan::call('migrate', [
+				'--path' => str_replace(base_path(), '', $migrationPath),
+				'--force' => true
+			]);
+		}
+	}
+
+	/**
+	 * Run the Referral Database Seeder.
+	 */
+	protected function runSeeder()
+	{
+		Artisan::call('db:seed', ['--class' => 'Tonkra\\Referral\\Database\\Seeders\\ReferralDatabaseSeeder']);
 	}
 }
