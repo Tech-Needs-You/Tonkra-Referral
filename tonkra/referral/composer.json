@@ -1,0 +1,35 @@
+{
+    "name": "tonkra/referral",
+    "description": "Referral system package for Tonkra SMS",
+    "type": "package",
+    "require": {
+        "php": "^8.1",
+        "laravel/framework": "^10.0"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Tonkra\\Referral\\ReferralServiceProvider"
+            ]
+        }
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Tonkra\\Referral\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tonkra\\Referral\\Database\\Seeders\\": "src/database/seeders/"
+        }
+    },
+    "authors": [
+        {
+            "name": "SIRJAW",
+            "email": "sirjaw4u@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
