@@ -30,6 +30,6 @@
             "email": "sirjaw4u@gmail.com"
         }
     ],
-    "minimum-stability": "dev",
+    "minimum-stability": "stable",
     "prefer-stable": true
 }
