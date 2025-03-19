@@ -1,9 +1,8 @@
 <?php
 
-namespace Tonkra\Referral\Database\Seeders;
+namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Tonkra\Referral\Database\Seeders\ReferralEmailTemplateSeeder;
 
 class ReferralDatabaseSeeder extends Seeder
 {

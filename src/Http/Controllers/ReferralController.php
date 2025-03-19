@@ -3,16 +3,15 @@
 namespace Tonkra\Referral\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\UserPreference;
 use App\Repositories\Contracts\CustomerRepository;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\URL;
 use Illuminate\View\View;
+use Tonkra\Referral\Facades\ReferralSettings;
 use Tonkra\Referral\Models\ReferralUser;
-use Tonkra\Referral\Models\UserPreference as ModelsUserPreference;
+use Tonkra\Referral\Models\UserPreference;
 
 class ReferralsController extends Controller
 {
@@ -21,7 +20,7 @@ class ReferralsController extends Controller
 
 	public function __construct(CustomerRepository $customers)
 	{
-		$this->isReferralEnabled = (bool)json_decode(\App\Helpers\Helper::app_config('referral_system'))->status;
+		$this->isReferralEnabled = (bool)ReferralSettings::status();
 		$this->customers = $customers;
 	}
 
@@ -50,7 +49,7 @@ class ReferralsController extends Controller
 		$isReferralEnabled = (bool)json_decode(\App\Helpers\Helper::app_config('referral_system'))->status;
 		$referrer = $user->referrer();
 		$referrer_downline_count = number_format($referrer?->downliners()->count(), 0, '.', ',');
-		$referral_preference = $user->preferences?->getPreference(ModelsUserPreference::KEY_REFERRAL);
+		$referral_preference = $user->preferences?->getPreference(UserPreference::KEY_REFERRAL);
 
 		return view('customer.Referrals.index', compact('breadcrumbs', 'user', 'referrer', 'referrer_downline_count', 'referral_preference'));
 	}
