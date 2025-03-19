@@ -35,7 +35,6 @@ class ReferralServiceProvider extends ServiceProvider
 		], 'config');
 
 		// Publish Migrations
-		// Publish Migrations
 		if ($this->app->runningInConsole()) {
 			$this->publishes([
 				__DIR__ . '/database/migrations/' => database_path('migrations'),
@@ -105,7 +104,7 @@ class ReferralServiceProvider extends ServiceProvider
 	 */
 	protected function runMigrations()
 	{
-		$migrationPath = __DIR__ . '/database/migrations';
+		$migrationPath = __DIR__ . '\\database\\migrations';
 
 		// Check if migration files exist before running
 		if (File::exists($migrationPath)) {
@@ -121,6 +120,6 @@ class ReferralServiceProvider extends ServiceProvider
 	 */
 	protected function runSeeder()
 	{
-		Artisan::call('db:seed', ['--class' => 'Tonkra\\Referral\\Database\\Seeders\\ReferralDatabaseSeeder']);
+		return Artisan::call('db:seed', ['--class' => 'Tonkra\\Referral\\Database\\Seeders\\ReferralDatabaseSeeder']);
 	}
 }

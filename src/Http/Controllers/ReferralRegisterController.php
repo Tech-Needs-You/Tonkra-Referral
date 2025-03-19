@@ -183,56 +183,50 @@ class ReferralRegisterController extends Controller
 			$user->save();
 			$preferences = $user->createUserPreference();
 
-			$isReferralEnabled = config('referral.status');
 			// add referrer if referral system is enabled
-			if ($isReferralEnabled && !($data['referrer'] == null || $data['referrer'] == '')) {
-				$referrer = Referral::getReferrerByReferralCode($data['referrer']);
+			if (config('referral.status')) {
+				$referrer = null;
+				if (!empty($data['referrer'])) {
+					$referrer = Referral::getReferrerByReferralCode($data['referrer']);
+				}
+
 				$referral = Referral::create([
-					'user_id' => $user->id,
-					'referred_by' => $referrer->id,
+					'user_id'     => $user->id,
+					'referred_by' => $referrer?->id,
 				]);
 
-				Notifications::create([
-					'user_id'           => $referrer->id,
-					'notification_for'  => ReferralNotification::FOR_CUSTOMER,
-					'notification_type' => ReferralNotification::TYPE_NEW_REFERRAL,
-					'message'           => 'New Referral Registered for ' . $user->displayName(),
-				]);
+				if ($referrer) {
+					Notifications::create([
+						'user_id'           => $referrer->id,
+						'notification_for'  => ReferralNotification::FOR_CUSTOMER,
+						'notification_type' => ReferralNotification::TYPE_NEW_REFERRAL,
+						'message'           => 'New Referral Registered for ' . $user->displayName(),
+					]);
 
-				$send_data = [
-					'sender_id'         => 'TONKRA SMS',
-					'sms_type'          => 'plain',
-					'user'              => $referrer->user,
-					'region_code'       => $country->iso_code,
-					'country_code'      => $country->country_code,
-					'recipient'         => $phoneHelper->getNationalNumber($referrer->user->customer->phone),
-					'message'           => Tool::renderTemplate(__('referral::locale.referrals.new_referral_sms_message'), [
-						'upliner_name' => $referrer->displayName(),
-						'downliner_name' => $user->displayName(),
-						'app_name' => config('app.name'),
-					])
-				];
-				
-				// check and send referrer notifications
-				if ((bool)$referrer->preferences?->getPreference(UserPreference::KEY_REFERRAL)) {
-					if ((bool)$referrer->preferences?->getPreference(UserPreference::KEY_REFERRAL_EMAIL_NOTIFICATION)) {
+					$send_data = [
+						'sender_id'    => config('referral.default_senderid'),
+						'sms_type'     => 'plain',
+						'user'         => $referrer->user,
+						'region_code'  => $country->iso_code,
+						'country_code' => $country->country_code,
+						'recipient'    => $phoneHelper->getNationalNumber($referrer->user->customer->phone),
+						'message'      => Tool::renderTemplate(__('referral::locale.referrals.new_referral_sms_message'), [
+							'upliner_name'   => $referrer->displayName(),
+							'downliner_name' => $user->displayName(),
+							'app_name'       => config('app.name'),
+						])
+					];
+
+					// Send referral notifications based on referrer's preferences or global config
+					$notifyByEmail = (bool)($referrer->preferences?->getPreference(UserPreference::KEY_REFERRAL_EMAIL_NOTIFICATION) ?? config('referral.email_notification'));
+					$notifyBySMS   = (bool)($referrer->preferences?->getPreference(UserPreference::KEY_REFERRAL_SMS_NOTIFICATION) ?? config('referral.sms_notification'));
+
+					if ($notifyByEmail) {
 						$referrer->notify(new NewReferralNotification($user->user, route('user.account', ['tab' => 'referral'])));
 					}
 
-					if ((bool)$referrer->preferences?->getPreference(UserPreference::KEY_REFERRAL_SMS_NOTIFICATION)) {
-						if ($send_data['recipient'] && $phoneHelper->validateInternationalNumber($referrer->user->customer->phone)) {
-							$this->campaigns->quickSend(new Campaigns(), $send_data);
-						}
-					}
-				} else {
-					if (config('referral.email_notification')) {
-						$referrer->notify(new NewReferralNotification($user->user, route('user.account', ['tab' => 'referral'])));
-					}
-
-					if (config('referral.sms_notification')) {
-						if ($send_data['recipient'] && $phoneHelper->validateInternationalNumber($referrer->user->customer->phone)) {
-							$this->campaigns->quickSend(new Campaigns(), $send_data);
-						}
+					if ($notifyBySMS && $send_data['recipient'] && $phoneHelper->validateInternationalNumber($referrer->user->customer->phone)) {
+						$this->campaigns->quickSend(new Campaigns(), $send_data);
 					}
 				}
 			}

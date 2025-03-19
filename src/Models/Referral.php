@@ -30,12 +30,12 @@ class Referral extends Model
 		return $this->belongsTo(ReferralUser::class);
 	}
 
-	public static function getByReferralCode(string $code): ?self
+	public static function getReferrerByReferralCode(string $code): ?self
 	{
 		return self::where('referral_code', $code)->first();
 	}
 
-	public function referrer() : ReferralUser|null
+	public function referrer(): ReferralUser|null
 	{
 		return ReferralUser::find($this->referred_by);
 	}
