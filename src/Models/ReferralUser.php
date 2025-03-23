@@ -66,7 +66,7 @@ class ReferralUser extends User
 	}
 
 
-	public function referralLink(): string
+	public function getReferralLinkAttribute(): string
 	{
 		return route('referral.register.with_referrer', ['referrer' => $this->referralCode()]);
 	}

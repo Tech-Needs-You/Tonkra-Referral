@@ -32,7 +32,7 @@ class ReferralServiceProvider extends ServiceProvider
 		// Publish config file
 		$this->publishes([
 			__DIR__ . '/config/referral.php' => config_path('referral.php'),
-		], 'config');
+		], 'referral-config');
 
 		// Publish Migrations
 		if ($this->app->runningInConsole()) {
