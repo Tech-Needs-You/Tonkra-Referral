@@ -2,17 +2,26 @@
 
 namespace Tonkra\Referral;
 
+use App\Models\AppConfig;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use Tonkra\Referral\Http\Middleware\ReferralRedirectMiddleware;
+use Tonkra\Referral\Providers\ReferralMenuServiceProvider;
+use Tonkra\Referral\Providers\ReferralPermissionServiceProvider;
 use Tonkra\Referral\Repositories\Contracts\ReferralAccountRepository;
+use Tonkra\Referral\Repositories\Contracts\ReferralAnnouncementsRepository;
 use Tonkra\Referral\Repositories\Contracts\ReferralBaseRepository;
+use Tonkra\Referral\Repositories\Contracts\ReferralCustomerRepository;
+use Tonkra\Referral\Repositories\Contracts\ReferralSettingsRepository;
 use Tonkra\Referral\Repositories\Contracts\ReferralSubscriptionRepository;
 use Tonkra\Referral\Repositories\Contracts\ReferralUserRepository;
 use Tonkra\Referral\Repositories\Eloquent\EloquentReferralAccountRepository;
+use Tonkra\Referral\Repositories\Eloquent\EloquentReferralAnnouncementsRepository;
 use Tonkra\Referral\Repositories\Eloquent\EloquentReferralBaseRepository;
+use Tonkra\Referral\Repositories\Eloquent\EloquentReferralCustomerRepository;
+use Tonkra\Referral\Repositories\Eloquent\EloquentReferralSettingsRepository;
 use Tonkra\Referral\Repositories\Eloquent\EloquentReferralSubscriptionRepository;
 use Tonkra\Referral\Repositories\Eloquent\EloquentReferralUserRepository;
 
@@ -46,12 +55,12 @@ class ReferralServiceProvider extends ServiceProvider
 			], 'referral-seeders');
 		}
 
+		// Load Migrations
+		$this->loadMigrationsFrom(__DIR__ . '/database/migrations');
+
 		// Run Migrations and Seeder Automatically (Optional)
 		$this->runMigrations();
 		$this->runSeeder();
-
-		// Load Migrations
-		$this->loadMigrationsFrom(__DIR__ . '/database/migrations');
 
 		// Register middleware
 		$this->registerMiddleware();
@@ -65,6 +74,10 @@ class ReferralServiceProvider extends ServiceProvider
 		$this->app->singleton('referral-settings', function () {
 			return new ReferralSettings();
 		});
+
+		// Dynamically register other Service Providers
+		$this->app->register(ReferralMenuServiceProvider::class);
+		$this->app->register(ReferralPermissionServiceProvider::class);
 
 		$this->bindRepositoryContracts();
 	}
@@ -97,6 +110,21 @@ class ReferralServiceProvider extends ServiceProvider
 			ReferralSubscriptionRepository::class,
 			EloquentReferralSubscriptionRepository::class
 		);
+
+		$this->app->bind(
+			ReferralSettingsRepository::class,
+			EloquentReferralSettingsRepository::class
+		);
+
+		$this->app->bind(
+			ReferralCustomerRepository::class,
+			EloquentReferralCustomerRepository::class
+		);
+
+		$this->app->bind(
+			ReferralAnnouncementsRepository::class,
+			EloquentReferralAnnouncementsRepository::class
+		);
 	}
 
 	/**
@@ -104,7 +132,7 @@ class ReferralServiceProvider extends ServiceProvider
 	 */
 	protected function runMigrations()
 	{
-		$migrationPath = __DIR__ . '\\database\\migrations';
+		$migrationPath = __DIR__ . '\\database\\migrations\\';
 
 		// Check if migration files exist before running
 		if (File::exists($migrationPath)) {

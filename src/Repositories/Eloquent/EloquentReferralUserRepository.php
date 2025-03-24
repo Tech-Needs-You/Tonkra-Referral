@@ -39,9 +39,9 @@ class EloquentReferralUserRepository extends EloquentReferralBaseRepository impl
      * @param  Repository  $config
      */
     public function __construct(
-            ReferralUser $user,
-            RoleRepository $roles,
-            Repository $config
+        ReferralUser $user,
+        RoleRepository $roles,
+        Repository $config
     ) {
         parent::__construct($user);
         $this->roles  = $roles;
@@ -82,30 +82,30 @@ class EloquentReferralUserRepository extends EloquentReferralBaseRepository impl
         } else {
             $user->is_admin = false;
 
-            if ( ! config('account.verify_account')) {
+            if (! config('account.verify_account')) {
                 $user->email_verified_at = Carbon::now();
             }
         }
 
 
-        if ( ! $this->save($user, $input)) {
+        if (! $this->save($user, $input)) {
             throw new GeneralException(__('locale.exceptions.something_went_wrong'));
         }
 
         if (isset($input['is_customer'])) {
             $customer = Customer::create([
-                    'user_id'       => $user->id,
-                    'phone'         => $input['phone'],
-                    'permissions'   => Customer::customerPermissions(),
-                    'notifications' => json_encode([
-                            'login'        => 'no',
-                            'tickets'      => 'yes',
-                            'sender_id'    => 'yes',
-                            'keyword'      => 'yes',
-                            'subscription' => 'yes',
-                            'promotion'    => 'yes',
-                            'profile'      => 'yes',
-                    ]),
+                'user_id'       => $user->id,
+                'phone'         => $input['phone'],
+                'permissions'   => Customer::customerPermissions(),
+                'notifications' => json_encode([
+                    'login'        => 'no',
+                    'tickets'      => 'yes',
+                    'sender_id'    => 'yes',
+                    'keyword'      => 'yes',
+                    'subscription' => 'yes',
+                    'promotion'    => 'yes',
+                    'profile'      => 'yes',
+                ]),
             ]);
 
             if ($customer) {
@@ -117,7 +117,6 @@ class EloquentReferralUserRepository extends EloquentReferralBaseRepository impl
             }
             $user->delete();
             throw new GeneralException(__('locale.exceptions.something_went_wrong'));
-
         }
 
         return $user;
@@ -134,7 +133,7 @@ class EloquentReferralUserRepository extends EloquentReferralBaseRepository impl
      */
     public function update(ReferralUser $user, array $input): ReferralUser
     {
-        if ( ! $user->can_edit) {
+        if (! $user->can_edit) {
             throw new GeneralException(__('locale.exceptions.something_went_wrong'));
         }
 
@@ -144,7 +143,7 @@ class EloquentReferralUserRepository extends EloquentReferralBaseRepository impl
             throw new GeneralException(__('locale.exceptions.something_went_wrong'));
         }
 
-        if ( ! $this->save($user, $input)) {
+        if (! $this->save($user, $input)) {
             throw new GeneralException(__('locale.exceptions.something_went_wrong'));
         }
 
@@ -163,21 +162,21 @@ class EloquentReferralUserRepository extends EloquentReferralBaseRepository impl
      */
     private function save(ReferralUser $user, array $input): bool
     {
-        if ( ! empty($input['password'])) {
+        if (! empty($input['password'])) {
             $user->password = Hash::make($input['password']);
         }
 
-        if ( ! $user->save()) {
+        if (! $user->save()) {
             return false;
         }
 
         $roles = $input['roles'] ?? [];
 
-        if ( ! empty($roles)) {
+        if (! empty($roles)) {
             $allowedRoles = $this->roles->getAllowedRoles()->keyBy('id');
 
             foreach ($roles as $id) {
-                if ( ! $allowedRoles->has($id)) {
+                if (! $allowedRoles->has($id)) {
                     throw new GeneralException(__('locale.exceptions.something_went_wrong'));
                 }
             }
@@ -196,15 +195,15 @@ class EloquentReferralUserRepository extends EloquentReferralBaseRepository impl
      */
     public function destroy(ReferralUser $user): bool
     {
-        if ( ! $user->can_delete) {
+        if (! $user->can_delete) {
             throw new GeneralException(__('locale.exceptions.unauthorized'));
         }
 
-        if ( ! $user->delete()) {
+        if (! $user->delete()) {
             throw new GeneralException(__('locale.exceptions.something_went_wrong'));
         }
 
-//        event(new UserDeleted($user));
+        //        event(new UserDeleted($user));
 
         return true;
     }
@@ -224,13 +223,14 @@ class EloquentReferralUserRepository extends EloquentReferralBaseRepository impl
 
         $authenticatedUser = auth()->user();
 
-        if ($authenticatedUser->id === $user->id
-                || Session::get('admin_user_id') === $user->id
+        if (
+            $authenticatedUser->id === $user->id
+            || Session::get('admin_user_id') === $user->id
         ) {
             return redirect()->route('admin.home');
         }
 
-        if ( ! Session::get('admin_user_id')) {
+        if (! Session::get('admin_user_id')) {
             session(['admin_user_id' => $authenticatedUser->id]);
             session(['admin_user_name' => $authenticatedUser->name]);
             session(['temp_user_id' => $user->id]);
@@ -274,7 +274,7 @@ class EloquentReferralUserRepository extends EloquentReferralBaseRepository impl
     {
         DB::transaction(function () use ($ids) {
             if ($this->query()->whereIn('uid', $ids)
-                     ->update(['status' => true])
+                ->update(['status' => true])
             ) {
                 return true;
             }
@@ -296,7 +296,7 @@ class EloquentReferralUserRepository extends EloquentReferralBaseRepository impl
     {
         DB::transaction(function () use ($ids) {
             if ($this->query()->whereIn('uid', $ids)
-                     ->update(['status' => false])
+                ->update(['status' => false])
             ) {
                 return true;
             }
@@ -306,5 +306,4 @@ class EloquentReferralUserRepository extends EloquentReferralBaseRepository impl
 
         return true;
     }
-
 }

@@ -3,10 +3,10 @@
 namespace Tonkra\Referral\Models;
 
 use App\Models\User;
-use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Tonkra\ReferralSystem\Models\Referral;
+use Illuminate\Http\JsonResponse;
+use Tonkra\Referral\Models\Referral;
 
 class ReferralUser extends User
 {
@@ -36,14 +36,19 @@ class ReferralUser extends User
 
 	public function referrer()
 	{
-		return $this->referral?->referrer;
+		return $this->referral?->referrer();
 	}
 
-	public function downliners(): Builder
+	public function downliners()
 	{
-		return User::join('referrer_user', 'users.id', '=', 'referrer_user.user_id')
-			->where('referrer_user.referrer_id', $this->id)
-			->select('users.*');
+		return $this->hasManyThrough(
+			ReferralUser::class,  // Final model (users)
+			Referral::class,      // Intermediate model (referrals)
+			'referred_by',        // Foreign key on referrals table (points to users)
+			'id',                 // Foreign key on users table
+			'id',                 // Local key on ReferralUser (users table)
+			'user_id'             // Local key on referrals table
+		);
 	}
 
 	public function preferences(): HasOne
@@ -66,12 +71,13 @@ class ReferralUser extends User
 	}
 
 
-	public function getReferralLinkAttribute(): string
+	public function referralLink(): string
 	{
 		return route('referral.register.with_referrer', ['referrer' => $this->referralCode()]);
 	}
 
-	public function createUserPreference($preferences = null){
+	public function createUserPreference($preferences = null)
+	{
 		$preferences = ($preferences == null) ? [
 			"referral" => [
 				'status' => config('referral.status'),
@@ -85,5 +91,47 @@ class ReferralUser extends User
 			[],
 			['preferences' => $preferences]
 		);
+	}
+
+	/**
+	 * Save user preferences 
+	 *
+	 * @param  array  $preferences
+	 *
+	 * @return JsonResponse
+	 * @throws AuthorizationException
+	 */
+	public function savePreference(array $preferences, $key): JsonResponse
+	{
+
+		if (config('app.stage') == 'demo') {
+			return response()->json([
+				'status'  => 'error',
+				'message' => 'Sorry! This option is not available in demo mode',
+			]);
+		}
+
+		$user_preferences = $this->preferences;
+		$new_key_preferences[$key] = $preferences;
+
+		if (!$user_preferences) {
+			$this->preferences()->create([
+				'preferences' => $new_key_preferences,
+			]);
+
+			return response()->json([
+				'status'  => 'success',
+				'message' => ucfirst(__('referral::locale.preferences.preference_saved_succeessfully', ['key' => $key])),
+			]);
+		}
+
+		$this->preferences()->update([
+			'preferences' => $user_preferences->preferences->isEmpty() ? $new_key_preferences : array_merge($user_preferences->preferences->toArray(), $new_key_preferences),
+		]);
+
+		return response()->json([
+			'status'  => 'success',
+			'message' => ucfirst(__('referral::locale.preferences.preference_saved_succeessfully', ['key' => $key])),
+		]);
 	}
 }

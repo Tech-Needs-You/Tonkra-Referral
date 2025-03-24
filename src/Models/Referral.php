@@ -12,6 +12,16 @@ class Referral extends Model
 {
 	use HasFactory;
 
+	const REFERRAL_STATUS 								= 'REFERRAL_STATUS';
+	const REFERRAL_BONUS 									= 'REFERRAL_BONUS';
+	const REFERRAL_EMAIL_NOTIFICATION 		= 'REFERRAL_EMAIL_NOTIFICATION';
+	const REFERRAL_SMS_NOTIFICATION 			= 'REFERRAL_SMS_NOTIFICATION';
+	const REFERRAL_DEFAULT_SENDERID 			= 'REFERRAL_DEFAULT_SENDERID';
+
+	const PERMISSION_VIEW_REFERRAL	 			= 'view_referral';
+	const PERMISSION_REFERRAL_SETTINGS	 	= 'referral settings';
+	const PERMISSION_GENERAL_SETTINGS	 		= 'general settings';
+
 	protected $fillable = ['user_id', 'referral_code', 'referred_by'];
 
 	protected static function boot()
