@@ -60,5 +60,4 @@ interface ReferralUserRepository extends ReferralBaseRepository
      * @return mixed
      */
     public function batchDisable(array $ids);
-
 }

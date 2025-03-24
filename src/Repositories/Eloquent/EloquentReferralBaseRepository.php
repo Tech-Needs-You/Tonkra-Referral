@@ -60,5 +60,4 @@ class EloquentReferralBaseRepository implements ReferralBaseRepository
     {
         return $this->query()->make($attributes);
     }
-
 }

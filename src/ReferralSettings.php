@@ -23,4 +23,9 @@ class ReferralSettings
 	{
 		return config('referral.email_notification');
 	}
+
+	public function defaultSenderId()
+	{
+		return config('referral.default_senderid');
+	}
 }

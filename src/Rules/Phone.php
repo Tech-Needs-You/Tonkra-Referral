@@ -24,13 +24,12 @@ class Phone implements ValidationRule
 		if (! $checkNumeric) {
 			$fail(__('referral::locale.validations.invalid_phone_number', ['phone' => $value]));
 		}
-		
+
 		try {
 			$phoneUtil         = PhoneNumberUtil::getInstance();
-			$phoneNumberObject = $phoneUtil->parse('+' . request('country_code'). $value);
+			$phoneNumberObject = $phoneUtil->parse('+' . request('country_code') . $value);
 			$countryCode       = $phoneNumberObject->getCountryCode();
 			$isoCode           = $phoneUtil->getRegionCodeForNumber($phoneNumberObject);
-			
 
 			if (! $phoneUtil->isPossibleNumber($phoneNumberObject) || empty($countryCode) || empty($isoCode)) {
 				$fail(__('referral::locale.validations.invalid_phone_number', ['phone' => $value]));

@@ -35,5 +35,4 @@ interface ReferralBaseRepository
      * @return Model
      */
     public function make(array $attributes = []);
-
 }
