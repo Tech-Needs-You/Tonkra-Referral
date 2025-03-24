@@ -34,8 +34,8 @@
 
 										<label class="mb-1">
 											<i data-feather="key"></i>&nbsp;
-											<i class="text-truncate">{{ $user->uid }}</i> 
-											<button class="copy-to-clipboard btn btn-sm btn-outline-primary" data-text="{{ $user->uid }}"  data-refferal-response="{{ __('referral::locale.labels.referral_code_copied') }}" title="{{__('referral::locale.buttons.copy_referral_code')}}">
+											<i class="text-truncate">{{ $user->referralCode() }}</i> 
+											<button class="copy-to-clipboard btn btn-sm btn-outline-primary" data-text="{{ $user->referralCode() }}"  data-refferal-response="{{ __('referral::locale.labels.referral_code_copied') }}" title="{{__('referral::locale.buttons.copy_referral_code')}}">
 												<span class="font-weight-bold" style="font-size: 12px"><i data-feather="copy"></i></span>
 											</button>
 										</label>

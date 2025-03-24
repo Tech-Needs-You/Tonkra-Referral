@@ -31,7 +31,9 @@ class ReferralUser extends User
 	 */
 	public function referralCode()
 	{
-		return $this->referral?->referral_code;
+		return $this->referral()->firstOrCreate([], [
+			'referred_by' => null
+		])->referral_code;
 	}
 
 	public function referrer()

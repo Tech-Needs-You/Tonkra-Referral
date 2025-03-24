@@ -6,6 +6,7 @@ use App\Models\Role;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Tonkra\Referral\Helpers\Helper;
+use Tonkra\Referral\Models\Referral;
 use Tonkra\Referral\Models\ReferralRole;
 
 class ReferralPermissionServiceProvider extends ServiceProvider
@@ -23,6 +24,19 @@ class ReferralPermissionServiceProvider extends ServiceProvider
 				],
 			];
 			Helper::updateConfigPermission($newPermissions, "permissions");
+
+			$newCustomerPermissions = [
+				Referral::PERMISSION_VIEW_REFERRAL => [
+					'display_name' => 'read_referral',
+					'category'     => 'Referral',
+					'default'      => true,
+				],
+			];
+			Helper::updateConfigPermission($newCustomerPermissions, "customer-permissions");
+
+			config('referral.status') ?
+				Helper::addPermissions([Referral::PERMISSION_VIEW_REFERRAL]) :
+				Helper::removePermissions([Referral::PERMISSION_VIEW_REFERRAL]);
 		}
 	}
 
@@ -35,6 +49,4 @@ class ReferralPermissionServiceProvider extends ServiceProvider
 			]);
 		}
 	}
-
-	
 }

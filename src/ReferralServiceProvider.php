@@ -59,8 +59,8 @@ class ReferralServiceProvider extends ServiceProvider
 		$this->loadMigrationsFrom(__DIR__ . '/database/migrations');
 
 		// Run Migrations and Seeder Automatically (Optional)
-		$this->runMigrations();
-		$this->runSeeder();
+		// $this->runMigrations();
+		// $this->runSeeder();
 
 		// Register middleware
 		$this->registerMiddleware();
