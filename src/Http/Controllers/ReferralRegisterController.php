@@ -13,7 +13,6 @@ use App\Models\Senderid;
 use App\Models\Subscription;
 use App\Models\SubscriptionLog;
 use App\Models\SubscriptionTransaction;
-use App\Notifications\NewUserNotification;
 use App\Notifications\WelcomeEmailNotification;
 use App\Repositories\Contracts\CampaignRepository;
 use Carbon\Carbon;
@@ -34,6 +33,7 @@ use Tonkra\Referral\Models\Referral;
 use Tonkra\Referral\Models\ReferralNotification;
 use Tonkra\Referral\Models\UserPreference;
 use Tonkra\Referral\Notifications\NewReferralNotification;
+use Tonkra\Referral\Notifications\NewUserNotification;
 
 class ReferralRegisterController extends Controller
 {
