@@ -19,6 +19,9 @@ composer require tonkra/referral
 ### 2. Publish the Package Assets
 Publish the configuration and migration files:
 ```sh
+php artisan vendor:publish --provider="Tonkra\Referral\ReferralServiceProvider"
+```
+```sh
 php artisan vendor:publish --tag=referral-config
 php artisan vendor:publish --tag=referral-migrations
 php artisan vendor:publish --tag=referral-seeders
