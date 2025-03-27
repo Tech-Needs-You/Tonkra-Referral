@@ -1,4 +1,4 @@
-# Tonkra SMS Referral System Package v1.0.1
+# Tonkra SMS Referral System Package v1.0.0
 
 A Laravel package for adding a referral system to Tonkra SMS, designed for easy integration and seamless updates.
 
