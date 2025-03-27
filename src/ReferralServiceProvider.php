@@ -2,7 +2,6 @@
 
 namespace Tonkra\Referral;
 
-use App\Models\AppConfig;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Support\Facades\Artisan;

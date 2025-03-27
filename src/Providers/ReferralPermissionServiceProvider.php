@@ -43,7 +43,8 @@ class ReferralPermissionServiceProvider extends ServiceProvider
 	protected function assignReferralPermissionToAdminRole()
 	{
 		if ($role = Role::where('name', ReferralRole::ROLE_NAME_ADMIN)->first()) {
-			$role->permissions()->firstOrCreate(['name' => 'referral settings'], [
+			$role->permissions()->firstOrCreate(
+				['name' => 'referral settings'], [
 				'display_name' => 'referral',
 				'category' => 'Settings',
 			]);
