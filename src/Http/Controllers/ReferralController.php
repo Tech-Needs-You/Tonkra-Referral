@@ -286,6 +286,7 @@ class ReferralController extends Controller
 		}
 		return $image->response();
 	}
+	
 	/**
 	 * get referrer referrer_avatar
 	 */

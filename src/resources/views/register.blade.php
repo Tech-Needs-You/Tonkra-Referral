@@ -370,5 +370,18 @@
       }
       $submitBtn.prop('disabled', false)
     }
+    
+    // type = ['success', 'error','warning']
+    // catchPhrase = Title of toast. Default is Attention
+    function showToast(type, message, catchPhrase = "{{ __('referral::locale.labels.attention') }}") {
+        let options = {
+            closeButton: true,
+            positionClass: 'toast-top-right',
+            progressBar: true,
+            newestOnTop: true,
+            rtl: isRtl
+        }
+        toastr[type](message, catchPhrase, options);
+    }
   </script>
 @endsection

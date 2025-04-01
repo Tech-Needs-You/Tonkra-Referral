@@ -40,6 +40,7 @@ return [
 		'account' 															=> 'Account',
 		'actions'                               => 'Actions',
 		'active'                               	=> 'Active',
+		'attention'                             => 'Attention',
 		'balance'                               => 'Balance',
 		'disable'                              	=> 'Disable',
 		'disabled'                              => 'Disabled',
