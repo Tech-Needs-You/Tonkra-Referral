@@ -50,6 +50,7 @@ return new class extends Migration
         });
 
         Schema::create('referral_redemptions', function (Blueprint $table) {
+            $table->engine = 'MyISAM';
             $table->id();
             $table->string('uid')->unique();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
