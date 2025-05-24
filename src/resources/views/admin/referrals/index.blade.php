@@ -898,6 +898,7 @@
 								{"data": "uid"},
 								{"data": "uid"},
 								{"data": "name"},
+								{"data": "downliner_count", orderable: false, searchable: false},
 								{"data": "earned_bonus", orderable: true, searchable: false},
 								{"data": "balance", orderable: true, searchable: false},
 								{"data": "status", orderable: false, searchable: false},
@@ -981,7 +982,7 @@
 								},
 								{
 										// Status
-										targets: 6,
+										targets: 7,
 										responsivePriority: 4,
 										render: function (data, type, full) {
 												var $status 			= full['status'],

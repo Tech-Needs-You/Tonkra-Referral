@@ -434,6 +434,7 @@
 								{"data": "name"},
 								{"data": "earned_bonus", orderable: false, searchable: false},
 								{"data": "balance", orderable: false, searchable: false},
+								{"data": "phone", orderable: false, searchable: false},
 								{"data": "status", orderable: false, searchable: false},
 								{"data": "action", orderable: false, searchable: false}
 						],
@@ -514,7 +515,7 @@
 								},
 								{
 										// Status
-										targets: 6,
+										targets: 7,
 										responsivePriority: 4,
 										render: function (data, type, full) {
 												var $status 			= full['status'],
@@ -616,7 +617,7 @@
 								{"data": 'responsive_id', orderable: false, searchable: false},
 								{"data": "uid"},
 								{"data": "request_id"},
-								{"data": "downliner"},
+								{"data": "downliner", visible: false},
 								{"data": "amount"},
 								{"data": "payout_method"},
 								{"data": "status"},

@@ -136,6 +136,7 @@
 												<th>{{__('referral::locale.labels.name')}} </th>
 												<th>{{__('referral::locale.referrals.earned_bonus')}}</th>
 												<th>{{__('referral::locale.labels.balance')}}</th>
+												<th>{{__('referral::locale.labels.phone')}}</th>
 												<th>{{__('referral::locale.labels.status')}}</th>
 												<th>{{__('referral::locale.labels.actions')}}</th>
 										</tr>

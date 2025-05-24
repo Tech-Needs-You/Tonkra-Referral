@@ -353,7 +353,7 @@ class ReferralPaymentService
 	{
 		$user_sms_unit = $user->user->sms_unit;
 		$referralCode = $details['recipient'];
-		$recipient = Referral::findByReferralCode($referralCode)->user;
+		$recipient = Referral::getReferrerByReferralCode($referralCode)->user;
 		$recipient_sms_unit_before = $recipient->sms_unit;
 
 		$recipient->sms_unit = $recipient->sms_unit + $amount;

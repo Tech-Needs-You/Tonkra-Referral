@@ -154,6 +154,7 @@ return [
 		'completed' 															=> 'Completed',
 		'failed' 																	=> 'Failed',
 		'pending' 																=> 'Pending',
+		'processed_at' 														=> 'Processed At',
 		'processing' 															=> 'Processing',
 		'redemption_not_available' 								=> 'Redemption does not exist',
 		'redemption_successfully_updated' 				=> 'Redemption successfully updated',

@@ -158,8 +158,9 @@ class ReferralController extends Controller
 			3 => 'name',
 			4 => 'earned_bonus',
 			5 => 'balance',
-			6 => 'status',
-			7 => 'action',
+			6 => 'phone',
+			7 => 'status',
+			8 => 'action',
 		];
 		$user = (!$user) ? ReferralUser::find(auth()->id()) : $user;
 
@@ -223,7 +224,8 @@ class ReferralController extends Controller
 				$nestedData['status_color']       = $status_color;
 				$nestedData['status_label']             = $status_label;
 
-				$nestedData['balance']             = number_format($downliner->sms_unit);
+				$nestedData['balance']              = number_format($downliner->sms_unit);
+				$nestedData['phone']             		= '<a href="tel:' . $downliner->user->customer->phone . '">' . $downliner->user->customer->phone . '</a>';
 				$nestedData['copy']                 = $downliner->referralCode();
 				$nestedData['copy_label']           = $copy;
 				$nestedData['report']            = $downliner->uid;
@@ -282,78 +284,88 @@ class ReferralController extends Controller
 		$order = $columns[$request->input('order.0.column')];
 		$dir   = $request->input('order.0.dir');
 
-		if (empty($request->input('search.value'))) {
-			$redemptions = $user->referralRedemptions()->offset($start)
-				->limit($limit)
-				// ->orderBy($order, $dir)
-				->orderBy('processed_by', $dir)
-				->get();
+		$query = $user->referralRedemptions()
+			->selectRaw('
+                MIN(user_id) as user_id,
+                request_id,
+                SUM(amount) as amount,
+                MIN(status) as status,
+                payout_method,
+                MIN(created_at) as created_at,
+                MIN(processed_at) as processed_at
+            ')
+			->with('user')
+			->groupBy('request_id')
+			->orderBy($order, $dir);
+
+		$recordsTotal = $query->get()->count();
+
+		if ($search = $request->input('search.value')) {
+			$query->whereLike(['user_id', 'request_id', 'amount', 'status', 'payout_method', 'created_at', 'processed_at'], $search);
+			$totalFiltered = $query->whereLike(['user_id', 'request_id', 'amount', 'status', 'payout_method', 'created_at', 'processed_at'], $search)
+				->groupBy('request_id')
+				->get()
+				->count();
 		} else {
-			$search = $request->input('search.value');
-
-			$redemptions = $user->referralRedemptions()->whereLike(['uid', 'user.first_name', 'user.last_name', 'request_id', 'amount', 'status', 'payout_details', 'failure_reason'], $search)
-				->offset($start)
-				->limit($limit)
-				->orderBy($order, $dir)
-				->get();
-
-			$totalFiltered = $user->referralRedemptions()->whereLike(['uid', 'user.first_name', 'user.last_name', 'request_id', 'amount', 'status', 'payout_details', 'failure_reason'], $search)->count();
+			$totalFiltered = $recordsTotal;
 		}
 
-		$data = [];
-		if (! empty($redemptions)) {
-			foreach ($redemptions as $redemption) {
-				// $topup              = __('referral::locale.buttons.top_up');
-				// $report                = __('referral::locale.buttons.report');
-				// $copy                    = __('referral::locale.buttons.copy_referral_code');
+		$redemptions = $query->orderBy($order, $dir)
+			->offset($start)
+			->limit($limit)
+			->get();
 
-				if ($redemption->status === ReferralRedemption::STATUS_PENDING) {
-					$status = '<span class="badge badge-sm bg-secondary">' . __('referral::locale.referral_redemptions.pending') . '</span>';
-				} elseif ($redemption->status === ReferralRedemption::STATUS_PROCESSING) {
-					$status = '<span class="badge badge-sm bg-warning">' . __('referral::locale.referral_redemptions.processing') . '</span>';
-				} elseif ($redemption->status === ReferralRedemption::STATUS_COMPLETED) {
-					$status = '<span class="badge badge-sm bg-success">' . __('referral::locale.referral_redemptions.completed') . '</span>';
-				} elseif ($redemption->status === ReferralRedemption::STATUS_FAILED) {
-					$status = '<span class="badge badge-sm bg-danger">' . __('referral::locale.referral_redemptions.failed') . '</span>';
-				} else {
-					$status = '<span class="badge badge-sm bg-dark">' . $redemption->status . '</span>';
-				}
+		$data = $redemptions->map(function ($redemption) {
+			// $topup              = __('referral::locale.buttons.top_up');
+			// $report                = __('referral::locale.buttons.report');
+			// $copy                    = __('referral::locale.buttons.copy_referral_code');
 
-				$super_user = true;
-				if ($redemption->user->user->id != 1) {
-					$super_user = false;
-				}
-
-				$nestedData['responsive_id']		 = '';
-				$nestedData['uid']          		 = $redemption->uid;
-				$nestedData['avatar']       		 = route('referral.user.user_avatar', $redemption->user->user->uid);
-				$nestedData['amount']       		 = number_format($redemption->amount);
-				$nestedData['payout_method']     = strtoupper(str_replace('_', ' ', __('referral::locale.referral_redemptions.'.$redemption->payout_method)));
-				$nestedData['downliner_name']    = $redemption->referralBonus->fromUser->user->displayName();
-				$nestedData['request_id']           		 = $redemption->request_id;
-				$nestedData['processed_at']   		 = $redemption->payout_method == ReferralRedemption::PAYOUT_WALLET
-																							? ($redemption->status == ReferralRedemption::STATUS_COMPLETED
-																								? __('referral::locale.labels.redeemed') . ': ' . Tool::customerDateTime($redemption->processed_at)
-																								: __('referral::locale.labels.created_at') . ': ' . Tool::customerDateTime($redemption->created_at))
-																							: __('referral::locale.labels.redeemed') . ': ' . Tool::customerDateTime($redemption->processed_at);
-
-				$nestedData['status']            = $status;
-				$nestedData['super_user']        = $super_user;
-				$nestedData['is_admin']          = ReferralUser::find(auth()->id())->isAdmin();
-				$nestedData['url']               = route('admin.customers.show', ['customer' => $redemption->user->user->uid]);
-
-				$data[] = $nestedData;
+			if ($redemption->status === ReferralRedemption::STATUS_PENDING) {
+				$status = '<span class="badge badge-sm bg-secondary">' . __('referral::locale.referral_redemptions.pending') . '</span>';
+			} elseif ($redemption->status === ReferralRedemption::STATUS_PROCESSING) {
+				$status = '<span class="badge badge-sm bg-warning">' . __('referral::locale.referral_redemptions.processing') . '</span>';
+			} elseif ($redemption->status === ReferralRedemption::STATUS_COMPLETED) {
+				$status = '<span class="badge badge-sm bg-success">' . __('referral::locale.referral_redemptions.completed') . '</span>';
+			} elseif ($redemption->status === ReferralRedemption::STATUS_FAILED) {
+				$status = '<span class="badge badge-sm bg-danger">' . __('referral::locale.referral_redemptions.failed') . '</span>';
+			} else {
+				$status = '<span class="badge badge-sm bg-dark">' . $redemption->status . '</span>';
 			}
-		}
 
-		$json_data = [
+			$super_user = true;
+			if ($redemption->user->user->id != 1) {
+				$super_user = false;
+			}
+
+			return [
+				'responsive_id'		 => '',
+				'uid'          		 => $redemption->uid,
+				'avatar'       		 => route('referral.user.user_avatar', $redemption->user->user->uid),
+				'amount'       		 => number_format($redemption->amount),
+				'payout_method'     => strtoupper(str_replace('_', ' ', __('referral::locale.referral_redemptions.' . $redemption->payout_method))),
+				'name'    						=> '',
+				'request_id'           		 => $redemption->request_id,
+				'processed_at'   		 => $redemption->payout_method == ReferralRedemption::PAYOUT_WALLET
+					? ($redemption->status == ReferralRedemption::STATUS_COMPLETED
+						? __('referral::locale.labels.redeemed') . ': ' . Tool::customerDateTime($redemption->processed_at)
+						: __('referral::locale.labels.created_at') . ': ' . Tool::customerDateTime($redemption->created_at))
+					: __('referral::locale.labels.redeemed') . ': ' . Tool::customerDateTime($redemption->processed_at),
+
+				'status'            => $status,
+				'super_user'        => $super_user,
+				'is_admin'          => ReferralUser::find(auth()->id())->isAdmin(),
+				'url'               => route('admin.customers.show', ['customer' => $redemption->user->user->uid]),
+
+			];
+		});
+
+		echo json_encode([
 			"draw"            => intval($request->input('draw')),
-			"recordsTotal"    => $totalData,
+			"recordsTotal"    => $recordsTotal,
 			"recordsFiltered" => $totalFiltered,
 			"data"            => $data,
-		];
+		]);
 
-		echo json_encode($json_data);
 		exit();
 	}
 
@@ -426,13 +438,13 @@ class ReferralController extends Controller
 				ReferralRedemption::STATUS_FAILED => ['color' => 'danger', 'icon' => 'fa fa-thumbs-down']
 			];
 			$request_id = '<a href="' . route('referral.admin.redemptions.show', $redemption->request_id) . '" class="text-primary fw-bold">#' . $redemption->request_id . '</a>';
-			$status_dropdown_list = ($redemption->status == ReferralRedemption::STATUS_PENDING) 
-																? [ReferralRedemption::STATUS_PROCESSING, ReferralRedemption::STATUS_COMPLETED, ReferralRedemption::STATUS_FAILED]
-																: ($redemption->status == ReferralRedemption::STATUS_PROCESSING
-																	? [ReferralRedemption::STATUS_COMPLETED, ReferralRedemption::STATUS_FAILED]
-																	: ($redemption->status == ReferralRedemption::STATUS_FAILED
-																		? [ReferralRedemption::STATUS_COMPLETED]
-																		: []));
+			$status_dropdown_list = ($redemption->status == ReferralRedemption::STATUS_PENDING)
+				? [ReferralRedemption::STATUS_PROCESSING, ReferralRedemption::STATUS_COMPLETED, ReferralRedemption::STATUS_FAILED]
+				: ($redemption->status == ReferralRedemption::STATUS_PROCESSING
+					? [ReferralRedemption::STATUS_COMPLETED, ReferralRedemption::STATUS_FAILED]
+					: ($redemption->status == ReferralRedemption::STATUS_FAILED
+						? [ReferralRedemption::STATUS_COMPLETED]
+						: []));
 			return [
 				'responsive_id' => '',
 				'uid' => $redemption->request_id,
@@ -453,7 +465,7 @@ class ReferralController extends Controller
 				'moneytary_value' => $redemption->payout_details['moneytary_value'] ?? number_format($redemption->amount * ReferralSettings::redeemRate(), 2),
 				'status_dropdown_list' => $status_dropdown_list,
 				'actual_status' => $redemption->status,
-				'status' => '<span class="badge badge-sm bg-' . ($statuses[$redemption->status]['color'] ?? 'dark') . '"><i class="'. $statuses[$redemption->status]['icon'] .'"></i><b class="d-none">' . __('referral::locale.referral_redemptions.' . strtolower($redemption->status), [], $redemption->status) . '</b></span>',
+				'status' => '<span class="badge badge-sm bg-' . ($statuses[$redemption->status]['color'] ?? 'dark') . '"><i class="' . $statuses[$redemption->status]['icon'] . '"></i><b class="d-none">' . __('referral::locale.referral_redemptions.' . strtolower($redemption->status), [], $redemption->status) . '</b></span>',
 				'edit' => route('referral.admin.redemptions.show', $redemption->request_id)
 			];
 		});
@@ -505,7 +517,7 @@ class ReferralController extends Controller
 
 		if ($search = $request->input('search.value')) {
 			$query = ReferralBonus::whereLike(['uid', 'transaction_id', 'from', 'to', 'bonus', 'original_amount', 'status', 'paid_at', 'created_at'], $search)
-															->orWhereLike(['transaction.type', $search]);
+				->orWhereLike(['transaction.type', $search]);
 			$totalFiltered = $query->get()->count();
 		} else {
 			$totalFiltered = $recordsTotal;
@@ -534,9 +546,9 @@ class ReferralController extends Controller
 				'created_at' => Tool::customerDateTime($earning->created_at),
 				'is_partially_redeemed' => ($earning->status == ReferralBonus::STATUS_PARTLY_REDEEMED && $earning->original_amount != null),
 				'original_amount' => $earning->original_amount,
-				'type' => __('referral::locale.referral_bonuses.'.$earning->transaction->type),
+				'type' => __('referral::locale.referral_bonuses.' . $earning->transaction->type),
 				'actual_status' => $earning->status,
-				'status' => '<span class="badge badge-sm bg-' . ($statuses[$earning->status]['color'] ?? 'dark') . '"><i class="'. $statuses[$earning->status]['icon'] .'"></i><b class="d-none">' . __('referral::locale.referral_earnings.' . strtolower($earning->status), [], $earning->status) . '</b></span>',
+				'status' => '<span class="badge badge-sm bg-' . ($statuses[$earning->status]['color'] ?? 'dark') . '"><i class="' . $statuses[$earning->status]['icon'] . '"></i><b class="d-none">' . __('referral::locale.referral_earnings.' . strtolower($earning->status), [], $earning->status) . '</b></span>',
 			];
 		});
 
@@ -568,7 +580,7 @@ class ReferralController extends Controller
 
 		$redemptions = ReferralRedemption::where('request_id', $redemption)->get();
 
-		if(!$redemptions){
+		if (!$redemptions) {
 			return response()->json([
 				'status'  => 'error',
 				'message' => __('referral.locale.referral_redemption.redemption_not_available'),
@@ -602,11 +614,12 @@ class ReferralController extends Controller
 			1 => 'uid',
 			2 => 'uid',
 			3 => 'name',
-			4 => 'earned_bonus',
-			5 => 'balance',
-			6 => 'status',
-			7 => 'created_at',
-			8 => 'action',
+			4 => 'downliner_count',
+			5 => 'earned_bonus',
+			6 => 'balance',
+			7 => 'status',
+			8 => 'created_at',
+			9 => 'action',
 		];
 
 		$isAdmin = auth()->user()->isAdmin() && auth()->user()->active_portal == 'admin';
@@ -625,10 +638,14 @@ class ReferralController extends Controller
 
 		if (empty($request->input('search.value'))) {
 
-			$users = $query->with(['referrer', 'downliners' => function ($q) {
+			$users = $query->with([
+				'referrer',
+				'downliners' => function ($q) {
 					// Use the relationship's qualified column names
 					$q->select([
-						$q->getQuery()->from . '.id', 'referred_by']);
+						$q->getQuery()->from . '.id',
+						'referred_by'
+					]);
 				}
 			])
 				->offset($start)
@@ -638,7 +655,9 @@ class ReferralController extends Controller
 		} else {
 			$search = $request->input('search.value');
 
-			$users = $query->with(['referrer', 'downliners' => function ($q) {
+			$users = $query->with([
+				'referrer',
+				'downliners' => function ($q) {
 					$q->select([$q->getQuery()->from . '.id', 'referred_by']);
 				}
 			])
@@ -860,7 +879,7 @@ class ReferralController extends Controller
 
 		return redirect()->route('referral.index')->with([
 			'status'  => 'success',
-			'message' => __('referral::locale.referral_bonuses.bonus_successfully_redeemed', ['bonus' => $validated['amount'].'('.$result['moneytary_value'].')', 'type' => 'withdrawn']),
+			'message' => __('referral::locale.referral_bonuses.bonus_successfully_redeemed', ['bonus' => $validated['amount'] . '(' . $result['moneytary_value'] . ')', 'type' => 'withdrawn']),
 		]);
 	}
 
@@ -884,12 +903,15 @@ class ReferralController extends Controller
 		$availableBonusAmount = $user->paidReferralBonuses()->sum('bonus');
 
 		$validated  = $request->validate([
-			'recipient' => ['required', 'exists:referrals,referral_code', function ($attribute, $value, $fail) use ($user) {
-													if ($value === $user->referralCode()) {
-														$fail('You cannot transfer to your own account.');
-													}
-												},
-											],
+			'recipient' => [
+				'required',
+				'exists:referrals,referral_code',
+				function ($attribute, $value, $fail) use ($user) {
+					if ($value === $user->referralCode()) {
+						$fail('You cannot transfer to your own account.');
+					}
+				},
+			],
 			'amount' => ['required', 'numeric', 'min:' . ReferralSettings::minTransferRedeemAmount(), 'max:' . $availableBonusAmount],
 		]);
 

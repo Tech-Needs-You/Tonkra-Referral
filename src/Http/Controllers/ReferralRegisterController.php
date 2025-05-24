@@ -187,7 +187,7 @@ class ReferralRegisterController extends Controller
 			if (config('referral.status')) {
 				$referrer = null;
 				if (!empty($data['referrer'])) {
-					$referrer = Referral::getReferrerByReferralCode($data['referrer']);
+					$referrer = Referral::getReferrerByReferralCode($data['referrer'])->user;
 				}
 
 				$referral = Referral::create([
@@ -206,10 +206,10 @@ class ReferralRegisterController extends Controller
 					$send_data = [
 						'sender_id'    => config('referral.default_senderid'),
 						'sms_type'     => 'plain',
-						'user'         => $referrer->user,
+						'user'         => $referrer,
 						'region_code'  => $country->iso_code,
 						'country_code' => $country->country_code,
-						'recipient'    => $phoneHelper->getNationalNumber($referrer->user->customer->phone),
+						'recipient'    => $phoneHelper->getNationalNumber($referrer->customer->phone),
 						'message'      => Tool::renderTemplate(__('referral::locale.referrals.new_referral_sms_message'), [
 							'upliner_name'   => $referrer->displayName(),
 							'downliner_name' => $user->displayName(),
@@ -225,14 +225,14 @@ class ReferralRegisterController extends Controller
 						$referrer->notify(new NewReferralNotification($user->user, route('user.account', ['tab' => 'referral'])));
 					}
 
-					if ($notifyBySMS && $send_data['recipient'] && $phoneHelper->validateInternationalNumber($referrer->user->customer->phone)) {
+					if ($notifyBySMS && $send_data['recipient'] && $phoneHelper->validateInternationalNumber($referrer->customer->phone)) {
 						$this->campaigns->quickSend(new Campaigns(), $send_data);
 					}
 				}
 			}
 
 			// notify admin of new user registration
-			$admin->notify(new NewUserNotification($user->user, $referrer, route('admin.customers.index')));
+			$admin->notify(new NewUserNotification($user->user, $referrer->user, route('admin.customers.index')));
 
 			if (config('account.verify_account')) {
 				$user->sendEmailVerificationNotification();

@@ -23,6 +23,7 @@ use Tonkra\Referral\Models\ReferralRedemption;
 										<th></th>
 										<th>{{ __('referral::locale.labels.id') }}</th>
 										<th>{{__('referral::locale.labels.name')}} </th>
+										<th>{{__('referral::locale.referrals.downliners')}} </th>
 										<th>{{__('referral::locale.referrals.earned_bonus')}}</th>
 										<th>{{__('referral::locale.labels.balance')}}</th>
 										<th>{{__('referral::locale.labels.status')}}</th>

@@ -51,11 +51,6 @@ class Referral extends Model
 		});
 	}
 
-	public static function findByReferralCode(string $referral_code)
-	{
-		return self::where('referral_code', $referral_code)->first();
-	}
-
 	public function user(): BelongsTo
 	{
 		return $this->belongsTo(User::class);

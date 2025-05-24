@@ -56,7 +56,7 @@
 										<th>{{__('referral::locale.referrals.amount')}}</th>
 										<th>{{__('referral::locale.referrals.payout_method')}}</th>
 										<th>{{__('referral::locale.labels.status')}}</th>
-										<th>{{__('referral::locale.labels.processed_at')}}</th>
+										<th>{{__('referral::locale.referral_redemptions.processed_at')}}</th>
 										{{-- <th>{{__('referral::locale.labels.actions')}}</th> --}}
 									</tr>
 								</thead>
