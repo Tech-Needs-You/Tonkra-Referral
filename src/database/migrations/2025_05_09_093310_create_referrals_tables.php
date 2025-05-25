@@ -54,8 +54,8 @@ return new class extends Migration
             $table->id();
             $table->string('uid')->unique();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->string('request_id')->comment('Use to tract how many redemptions came from the same request');
-            $table->foreignId('referral_bonus_id')->constrained()->cascadeOnDelete();
+            $table->string('request_id')->comment('Use to track how many redemptions came from the same request');
+            $table->unsignedBigInteger('referral_bonus_id');
             $table->decimal('amount', 10, 2);
             $table->enum('status', [ReferralRedemption::STATUS_PENDING, ReferralRedemption::STATUS_PROCESSING, ReferralRedemption::STATUS_COMPLETED, ReferralRedemption::STATUS_FAILED])->default(ReferralRedemption::STATUS_PENDING);
             $table->string('payout_method'); // 'bank_transfer', 'sms_credit', etc.
@@ -65,7 +65,7 @@ return new class extends Migration
             $table->foreignId('processed_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamps();
 
-            $table->index(['status', 'request_id']);
+            $table->index(['status', 'request_id', 'referral_bonus_id']);
         });
 
     }
