@@ -190,7 +190,7 @@ class ReferralEmailTemplateSeeder extends Seeder
 				'subject' => 'Referral Bonus({bonus}) Awarded on {app_name}',
 				'content' => 'Hi {upliner_name},
 
-												You have have been awarded a {transaction_type} of {bonus} from your downliner {downliner_name}.
+												You have been rewarded a {transaction_type} of {bonus} from your downliner {downliner_name}.
 												Your available bonus is {available_bonus}.
 
 												Login to your portal to show details.

@@ -10,7 +10,7 @@
 				<div class="row">
 					<div class="col-12">
 						<div class="card">
-							<table id="earnings-table" class="table datatables-basic-earnings table-sm">
+							<table id="earnings-table" class="table datatables-basic-earnings">
 								<thead>
 									<tr>
 										<th></th>
@@ -20,7 +20,6 @@
 										<th>{{__('referral::locale.referral_bonuses.type')}}</th>
 										<th>{{__('referral::locale.labels.status')}}</th>
 										<th>{{__('referral::locale.labels.created_at')}}</th>
-										{{-- <th>{{__('referral::locale.labels.actions')}}</th> --}}
 									</tr>
 								</thead>
 							</table>

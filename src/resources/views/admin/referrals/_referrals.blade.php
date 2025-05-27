@@ -4,7 +4,7 @@ use Tonkra\Referral\Models\ReferralRedemption;
 
 
 
-<div class="row justify-content-center p-1">
+<div class="row justify-content-center p-1 pt-0">
 	<div class="card col-md-12">
 		<div class="card-head mt-1 d-flex justify-content-between">
 			<h5>{{ __('referral::locale.labels.referrals') }}</h5>
@@ -21,10 +21,10 @@ use Tonkra\Referral\Models\ReferralRedemption;
 									<tr>
 										<th></th>
 										<th></th>
-										<th>{{ __('referral::locale.labels.id') }}</th>
 										<th>{{__('referral::locale.labels.name')}} </th>
+										<th>{{__('referral::locale.labels.upliner')}} </th>
 										<th>{{__('referral::locale.referrals.downliners')}} </th>
-										<th>{{__('referral::locale.referrals.earned_bonus')}}</th>
+										<th>{{__('referral::locale.referrals.available_bonus')}}</th>
 										<th>{{__('referral::locale.labels.balance')}}</th>
 										<th>{{__('referral::locale.labels.status')}}</th>
 										<th>{{__('referral::locale.labels.created_at')}}</th>

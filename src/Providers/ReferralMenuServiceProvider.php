@@ -41,17 +41,6 @@ class ReferralMenuServiceProvider extends ServiceProvider
 		// Get existing menu data
 		$menuData = AppHelper::menuData();
 
-		// Define the referral menu item
-		$referralMenuItem = [
-			'url'    => route('referral.index'),
-			'slug'   => "referrals",
-			'name'   => "Referrals",
-			'i18n'   => "Referrals",
-			'icon'   => "heart",
-			'classlist' => (bool)config('referral.status') ? '' : 'hidden',
-			'access' => "view_referral",
-		];
-
 		if (auth()->user() && auth()->user()->active_portal == 'admin') {
 			$adminReferralMenuItem = [
 				'url'    => route('referral.index'),
@@ -66,10 +55,6 @@ class ReferralMenuServiceProvider extends ServiceProvider
 			// Find the index of the "Invoices" menu
 			$invoicesIndex = null;
 			foreach ($menuData['admin'] as $index => &$adminMenu) {
-				// if ($adminMenu['name'] === 'Settings') {
-				// 	$adminMenu['submenu'][] = $referralSettingsMenuItem;
-				// }
-
 				if ($adminMenu['name'] === 'Invoices') {
 					$invoicesIndex = $index;
 				}
@@ -80,8 +65,32 @@ class ReferralMenuServiceProvider extends ServiceProvider
 				array_splice($menuData['admin'], $invoicesIndex + 1, 0, [$adminReferralMenuItem]);
 			}
 		}
-		// Insert at index 13 (after 'Reports')
-		array_splice($menuData['customer'], 13, 0, [$referralMenuItem]);
+		
+		
+		// Define the referral menu item
+		$referralMenuItem = [
+			'url'    => route('referral.index'),
+			'slug'   => "referrals",
+			'name'   => "Referrals",
+			'i18n'   => "Referrals",
+			'icon'   => "heart",
+			'classlist' => (bool)config('referral.status') ? '' : 'hidden',
+			'access' => "view_referral",
+		];
+		
+		// Find the index of the "Report" menu
+		$reportsIndex = null;
+		foreach ($menuData['customer'] as $index => &$customerMenu) {
+			if (strtolower($customerMenu['name']) === 'reports') {
+				$reportsIndex = $index;
+				break;
+			}
+		}
+
+		// If "reports" is found, insert the new item after it
+		if ($reportsIndex !== null) {
+			array_splice($menuData['customer'], $reportsIndex + 1, 0, [$referralMenuItem]);
+		}
 
 
 		// Append the referral menu item

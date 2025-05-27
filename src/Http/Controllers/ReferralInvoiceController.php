@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\DB;
 use JetBrains\PhpStorm\NoReturn;
 use Tonkra\Referral\Models\ReferralRedemption;
 use Tonkra\Referral\Models\ReferralSubscriptionTransaction;
+use Tonkra\Referral\Models\ReferralInvoice;
 use Tonkra\Referral\Models\ReferralUser;
 use Tonkra\Referral\Services\ReferralPaymentService;
 
@@ -303,6 +304,7 @@ use Tonkra\Referral\Services\ReferralPaymentService;
                             'status' => SubscriptionTransaction::STATUS_SUCCESS,
                             'title'  => 'Add ' . $data['1'] . ' sms units',
                             'amount' => $data['1'] . ' sms units',
+                            'type'  => $data[0],
                         ]);
 
 
@@ -312,7 +314,7 @@ use Tonkra\Referral\Services\ReferralPaymentService;
                         ]);
 
                         if ($user->referrer && $user->referrer?->preferences?->preferences?->get('referral')['status']) {
-                            $this->referralPaymentService->processReferralBonus($user, $invoice);
+                            $this->referralPaymentService->processReferralBonus($user, ReferralInvoice::find($invoice->id));
                         }
 
                         return response()->json([
@@ -431,6 +433,7 @@ use Tonkra\Referral\Services\ReferralPaymentService;
                             'status'                 => SubscriptionTransaction::STATUS_SUCCESS,
                             'title'                  => trans('locale.subscription.subscribed_to_plan', ['plan' => $subscription->plan->getBillableName()]),
                             'amount'                 => $subscription->plan->getBillableFormattedPrice(),
+                            'type'                  => $data[0],
                         ]);
 
                         // add log

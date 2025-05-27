@@ -11,5 +11,5 @@ use App\Models\SubscriptionTransaction;
 class ReferralSubscriptionTransaction extends SubscriptionTransaction
 {
 
-	const TYPE_TOPUP = 'topup';
+	const TYPE_TOPUP = 'top_up';
 }

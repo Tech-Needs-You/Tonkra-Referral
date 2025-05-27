@@ -2,10 +2,9 @@
 
 namespace Tonkra\Referral\Services;
 
-use App\Library\Tool;
 use App\Models\Campaigns;
 use App\Models\Country;
-use App\Models\Invoices;
+use Tonkra\Referral\Models\ReferralInvoice;
 use App\Models\Notifications;
 use App\Repositories\Contracts\CampaignRepository;
 use Illuminate\Support\Collection;
@@ -20,6 +19,7 @@ use Tonkra\Referral\Models\ReferralRedemption;
 use Tonkra\Referral\Models\ReferralUser;
 use Tonkra\Referral\Models\UserPreference;
 use Tonkra\Referral\Notifications\ReferralBonusNotification;
+use Tonkra\Referral\Library\Tool;
 
 class ReferralPaymentService
 {
@@ -36,10 +36,11 @@ class ReferralPaymentService
 		$this->campaigns = $campaigns;
 	}
 
-	public function processReferralBonus(ReferralUser $user, Invoices $invoice)
-	{
+	public function processReferralBonus(ReferralUser $user, ReferralInvoice $invoice, $amount = null)
+	{	    
 		$referrer = $user->referrer;
-		$transaction = $invoice->transaction;
+		$transaction = $invoice->subscriptionTransaction;
+		$amount = $amount ?? $transaction->amount;
 
 		// 2. Verify referral is eligible for bonus
 		if (!$this->isEligible($user, $referrer)) {
@@ -47,7 +48,7 @@ class ReferralPaymentService
 		}
 
 		// 3. Calculate bonus amount
-		$bonusAmount = $this->calculateBonus((float) $transaction->amount);
+		$bonusAmount = $this->calculateBonus((float) $amount);
 
 		// 4. Create bonus record
 		$referralBonus = ReferralBonus::create([
@@ -81,7 +82,7 @@ class ReferralPaymentService
 		return $amount * $bonus;
 	}
 
-	protected function processPayout(ReferralUser $referrer, ReferralBonus $bonus, Invoices $invoice)
+	protected function processPayout(ReferralUser $referrer, ReferralBonus $bonus, ReferralInvoice $invoice)
 	{
 		$bonus->update(['status' => ReferralBonus::STATUS_PAID, 'paid_at' => now()]);
 
@@ -89,7 +90,7 @@ class ReferralPaymentService
 		$this->sendPayoutNotification($referrer, $bonus, $invoice);
 	}
 
-	protected function sendPayoutNotification(ReferralUser $referrer, ReferralBonus $bonus, Invoices $invoice)
+	protected function sendPayoutNotification(ReferralUser $referrer, ReferralBonus $bonus, ReferralInvoice $invoice)
 	{
 		$phoneHelper = new PhoneHelper();
 		$country = Country::where('name', ucfirst($referrer->user->customer->country))->first();
@@ -113,9 +114,9 @@ class ReferralPaymentService
 				'app_name'											=> config('app.name'),
 				'upliner_name'									=> $referrer->displayName(),
 				'downliner_name'								=> $downliner->displayName(),
-				'transaction_type'							=> $invoice->type,
-				'bonus'													=> $bonus->bonus,
-				'available_bonus'								=> $referrer->referralBonuses()->sum('bonus'),
+				'transaction_type'							    => $invoice->type,
+				'bonus'													=> (int) $bonus->bonus,
+				'available_bonus'								=> (int) $referrer->paidReferralBonuses()->sum('bonus'),
 				'date'													=> now(),
 				'url'														=> route('referral.index')
 			])

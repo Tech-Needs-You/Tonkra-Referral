@@ -69,6 +69,42 @@
 	.p-half {
 		padding: .5rem;
 	}
+	
+	.mask-toggle {
+        display: none;
+      }
+      
+      .mask-content {
+        -webkit-text-security: disc;
+        color: transparent;
+        text-shadow: 0 0 8px black;
+        letter-spacing: 0.3em;
+      }
+      
+      .mask-toggle:checked ~ .mask-content {
+        -webkit-text-security: none;
+        color: inherit;
+        text-shadow: none;
+        letter-spacing: normal;
+      }
+      
+      .masklabel {
+          cursor: pointer;
+      }
+      
+      .mask-label::after {
+          content: "\1F441"; /* " " attr(data-show-text); /* Eye icon + space + localized text */
+          font-size: 1.2rem;
+          color: green;
+          cursor: pointer;
+        }
+        
+        .mask-toggle:checked ~ .mask-label::after {
+          content: "\1F440"; /* " " attr(data-hide-text); /* Eyes icon + space + localized text */
+          font-size: 1.2rem;
+          color: red;
+          cursor: pointer;
+        }
 </style>
 @endsection
 
@@ -89,13 +125,13 @@
 					</h2>
 					<p class="card-text">{{ (__("referral::locale.referral_bonuses.$type")) }}</p>
 				</div>
-				<a href="{{route('customer.reports.campaigns')}}">
+				{{-- <a href="{{route('customer.reports.campaigns')}}"> --}}
 					<div class="avatar bg-light-info p-50 m-0">
 						<div class="avatar-content">
 							<i class="{{ $referralStats[$type]['icon'] }} font-medium-5"></i>
 						</div>
 					</div>
-				</a>
+				{{-- </a> --}}
 			</div>
 		</div>
 	</div>
@@ -185,10 +221,10 @@
 																	@csrf
 																	<h6 class="fw-bold text-center mb-2">Redeem as SMS Unit</h6>
 																	<div class="mb-3">
-																			<label for="redeemAmount" class="form-label">Amount (Available: {{ (int)$referralStats[ReferralBonus::STATUS_PAID]['amount'] }})</label>
+																			<label for="bulkTransferAmount" class="form-label">Amount (Available: {{ (int)$referralStats[ReferralBonus::STATUS_PAID]['amount'] }})</label>
 																			<input type="number" 
 																						class="form-control" 
-																						id="redeemAmount" 
+																						id="bulkTransferAmount" 
 																						name="amount" 
 																						min="{{ ReferralSettings::minSmsRedeemAmount() }}" 
 																						max="{{ (int)$referralStats[ReferralBonus::STATUS_PAID]['amount'] }}" 
@@ -249,10 +285,10 @@
 																					</select>
 																				</div>
 						
-																				<input type="text" id="accountNumber"
+																				<input type="text" id="phone"
 																					class="form-control @error('accountNumber') is-invalid @enderror"
 																					value="{{ old('accountNumber', $accountNumber ?? null) }}" name="accountNumber"
-																					placeholder="{{ __('referral::locale.labels.account_number') }}" aria-describedby="accountNumber" required>
+																					placeholder="{{ __('referral::locale.referral_bonuses.account_number') }}" aria-describedby="accountNumber" required>
 																			</div>
 																	</div>
 																	<div class="mb-1">
@@ -281,31 +317,31 @@
 													</button>
 													<div class="dropdown-form p-1 w-100 border border-primary mt-2 rounded" id="transferForm" style="display: none;">
 															<form method="post" action="{{ route('referral.customer.bonus.transfer') }}">
-																	@csrf
-																	<h6 class="fw-bold text-center mb-2">Transfer to Another User</h6>
-																	<div class="mb-1">
-																			<label for="recipient" class="form-label required">Recipient Referral Code</label>
-																			<input type="text" 
-																						class="form-control" 
-																						id="recipient" 
-																						name="recipient" 
-																						placeholder="Enter recipient's referral code"
-																						aria-describedby="recipientHelp">
-																			<div id="recipientHelp" class="form-text">Enter the recipient's referral code</div>
-																	</div>
-																	<div class="mb-1">
-																			<label for="transferAmount" class="form-label required">Amount (Available: {{ (int)$referralStats[ReferralBonus::STATUS_PAID]['amount'] }})</label>
-																			<input type="number" 
-																						class="form-control" 
-																						id="transferAmount" 
-																						name="amount" 
-																						min="{{ ReferralSettings::minTransferRedeemAmount() }}" 
-																						max="{{ (int)$referralStats[ReferralBonus::STATUS_PAID]['amount'] }}" 
-																						value="{{ min((int)$referralStats[ReferralBonus::STATUS_PAID]['amount'], max(ReferralSettings::minTransferRedeemAmount(), (int)$referralStats[ReferralBonus::STATUS_PAID]['amount'])) }}"
-																						aria-describedby="transferHelp">
-																			<div id="transferHelp" class="form-text">Minimum: {{ ReferralSettings::minTransferRedeemAmount() }}</div>
-																	</div>
-																	<button type="submit" class="btn btn-primary w-100">Confirm Transfer</button>
+																@csrf
+																<h6 class="fw-bold text-center mb-2">Transfer to Another User</h6>
+																<div class="mb-1">
+    																<label for="recipient" class="form-label required">Recipient Referral Code</label>
+    																<input type="text" 
+    																			class="form-control" 
+    																			id="recipient" 
+    																			name="recipient" 
+    																			placeholder="Enter recipient's referral code"
+    																			aria-describedby="recipientHelp">
+    																<div id="recipientHelp" class="form-text">Enter the recipient's referral code</div>
+																</div>
+																<div class="mb-1">
+																	<label for="transferAmount" class="form-label required">Amount (Available: {{ (int)$referralStats[ReferralBonus::STATUS_PAID]['amount'] }})</label>
+																	<input type="number" 
+																				class="form-control" 
+																				id="transferAmount" 
+																				name="amount" 
+																				min="{{ ReferralSettings::minTransferRedeemAmount() }}" 
+																				max="{{ (int)$referralStats[ReferralBonus::STATUS_PAID]['amount'] }}" 
+																				value="{{ min((int)$referralStats[ReferralBonus::STATUS_PAID]['amount'], max(ReferralSettings::minTransferRedeemAmount(), (int)$referralStats[ReferralBonus::STATUS_PAID]['amount'])) }}"
+																				aria-describedby="transferHelp">
+																	<div id="transferHelp" class="form-text">Minimum: {{ ReferralSettings::minTransferRedeemAmount() }}</div>
+																</div>
+																<button type="submit" class="btn btn-primary w-100">Confirm Transfer</button>
 															</form>
 													</div>
 											</li>
@@ -431,9 +467,9 @@
 								{"data": 'responsive_id', orderable: false, searchable: false},
 								{"data": "uid"},
 								{"data": "uid"},
-								{"data": "name"},
-								{"data": "earned_bonus", orderable: false, searchable: false},
-								{"data": "balance", orderable: false, searchable: false},
+								{"data": "name", orderable: false,},
+								{"data": "earned_bonus", searchable: false},
+								{"data": "balance", searchable: false},
 								{"data": "phone", orderable: false, searchable: false},
 								{"data": "status", orderable: false, searchable: false},
 								{"data": "action", orderable: false, searchable: false}
@@ -444,14 +480,14 @@
 										// For Responsive
 										className: 'control',
 										orderable: false,
-										responsivePriority: 2,
+										responsivePriority: 1,
 										targets: 0
 								},
 								{
 										// For Checkboxes
 										targets: 1,
 										orderable: false,
-										responsivePriority: 3,
+										responsivePriority: 2,
 										render: function (data) {
 												return (
 														'<div class="form-check"> <input class="form-check-input dt-checkboxes" type="checkbox" value="" id="' +
@@ -474,7 +510,7 @@
 								{
 										// Avatar image/badge, Name and post
 										targets: 3,
-										responsivePriority: 1,
+										responsivePriority: 3,
 										render: function (data, type, full) {
 												var $user_img = full['avatar'],
 														$name = full['name'],
@@ -514,6 +550,21 @@
 										}
 								},
 								{
+								    targets: 6,
+								    responsivePriority: 5,
+								    responsivePriority: 4,
+										render: function (data, type, full) {
+											var $phone 			= full['phone'],
+											    $uid 			= full['uid']
+											
+											// Creates full output for row
+											return `<input type="checkbox" id="toggle-${$uid}" class="mask-toggle">
+                                                    <span class="mask-content">${$phone}</span>
+                                                    <label for="toggle-${$uid}" class="mask-label" aria-label="Toggle visibility" data-show-text="{{ __('referral:locale.labels.show') }}" data-hide-text="{{ __('referral:locale.labels.hide') }}">
+                                                    </label>`
+										}
+								},
+								{
 										// Status
 										targets: 7,
 										responsivePriority: 4,
@@ -529,26 +580,53 @@
 										}
 								},
 								{
-										// Actions
-										targets: -1,
-										title: '{{ __('locale.labels.actions') }}',
-										orderable: false,
-										render: function (data, type, full) {
-												var $super_user = '';
-												
-												return (
-														$super_user +
-														'<a class="copy text-primary pe-1" data-text="'+ full['copy'] +'" data-bs-toggle="tooltip" data-bs-placement="top" title="' + full['copy_label'] + '" >' +
-														feather.icons['copy'].toSvg({class: 'font-medium-4'}) +
-														'</a>'//+
-														// '<a nohref="' + full['top_up'] + '" class="text-success pe-1" data-bs-toggle="tooltip" data-bs-placement="top" title="' + full['top_up_label'] + '" onclick="alert(\'Under construction\')">' +
-														// feather.icons['trending-up'].toSvg({class: 'font-medium-4'}) +
-														// '</a>'+
-														// '<a nohref="' + full['report'] + '" class="text-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="' + full['report_label'] + '" onclick="alert(\'Under construction\')">' +
-														// feather.icons['flag'].toSvg({class: 'font-medium-4'}) +
-														// '</a>'
-												);
+									// Actions
+									targets: -1,
+									title: '{{ __('locale.labels.actions') }}',
+									orderable: false,
+									render: function (data, type, full) {
+										var $output = ``,
+											$uid = full['uid'],
+											$downlinerName = full['name'],
+											$referralCode = full['copy'],
+										    $canTransfer = {{ ReferralSettings::minTransferRedeemStatus() }};
+
+										$output += '<a class="copy text-primary pe-1" data-text="'+ full['copy'] +'" data-bs-toggle="tooltip" data-bs-placement="top" title="' + full['copy_label'] + '" >' +
+								 						feather.icons['copy'].toSvg({class: 'font-medium-4'}) +
+								 					'</a>';
+								 					
+								 		if($canTransfer){
+										    $output += `<div class="dropdown d-inline-block" title="Transfer to ${$downlinerName}">
+                                                          <button type="button" class="btn btn-sm btn-success border-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+                                                            <i class="fa fa-hand-holding-medical"></i>
+                                                          </button>
+                                                          
+                                                          <form class="dropdown-menu dropdown-menu-end p-2"  style="min-width: 320px" method="post" action="{{ route('referral.customer.bonus.transfer') }}">
+																@csrf
+																<h6 class="fw-bold text-center mb-2">Transfer to ${$downlinerName}</h6>
+																
+																<div class="mb-1">
+																    <input type="hidden" name="recipient" value="${$referralCode}">
+																	<label for="downlineTransferAmount" class="form-label required">Amount (Available: {{ (int)$referralStats[ReferralBonus::STATUS_PAID]['amount'] }})</label>
+																	<input type="number" 
+																				class="form-control" 
+																				id="downlineTransferAmount" 
+																				name="amount" 
+																				min="{{ ReferralSettings::minTransferRedeemAmount() }}" 
+																				max="{{ (int)$referralStats[ReferralBonus::STATUS_PAID]['amount'] }}" 
+																				value="{{ min((int)$referralStats[ReferralBonus::STATUS_PAID]['amount'], max(ReferralSettings::minTransferRedeemAmount(), (int)$referralStats[ReferralBonus::STATUS_PAID]['amount'])) }}"
+																				aria-describedby="downlineTransferHelp">
+																	<div id="downlineTransferHelp" class="form-text">Minimum: {{ ReferralSettings::minTransferRedeemAmount() }}</div>
+																</div>
+																<button type="submit" class="btn btn-primary w-100">Transfer</button>
+															</form>
+						
+                							
+                    						</div>`;
 										}
+												
+									    return $output;	
+    								}
 								}
 						],
 						dom: '<"d-flex justify-content-between align-items-center mx-0 row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>t<"d-flex justify-content-between mx-0 row"<"col-sm-12 col-md-6"i><"col-sm-12 col-md-6"p>>',
@@ -843,31 +921,35 @@
 										responsivePriority: 1,
 										render: function (data, type, full) {
 												var $user_img = full['avatar'],
-														$from = full['from'],
-														$created_at = full['created_at']
+														$name = full['from'],
+														$created_at = full['created_at'];
 												if ($user_img) {
 														// For Avatar image
-														var $output = '<img src="' + $user_img + '" alt="Avatar" width="32" height="32">';
+														var $output =
+																'<img src="' + $user_img + '" alt="Avatar" width="32" height="32">';
 												} else {
 														// For Avatar badge
 														var stateNum = full['status'];
 														var states = ['success', 'danger', 'warning', 'info', 'dark', 'primary', 'secondary'];
-														var $state = states[stateNum], $initials = $from.match(/\b\w/g) || [];
+														var $state = states[stateNum],
+																$name = full['name'],
+																$initials = $name.match(/\b\w/g) || [];
 														$initials = (($initials.shift() || '') + ($initials.pop() || '')).toUpperCase();
 														$output = '<span class="avatar-content">' + $initials + '</span>';
 												}
 												var colorClass = $user_img === '' ? ' bg-light-' + $state + ' ' : '';
 												// Creates full output for row
 												return '<div class="d-flex justify-content-left align-items-center">' +
-														'<div class="avatar ' +
-														colorClass +
-														' me-1">' +
+														'<div class="avatar ' + colorClass + ' me-1">' +
 														$output +
 														'</div>' +
 														'<div class="d-flex flex-column">' +
-														'<span class="emp_name text-truncate fw-bold text-sm">' +
-														$from +
+														'<span class="emp_name text-truncate fw-bold">' +
+														$name +
 														'</span>' +
+														'<small class="emp_post text-truncate text-muted">' +
+														$created_at +
+														'</small>' +
 														'</div>' +
 														'</div>';
 										}
@@ -880,15 +962,15 @@
 												var $bonus = full['bonus'],
 														$is_partially_redeemed = full['is_partially_redeemed'],
 														$original_amount = full['original_amount'],
-														$remaining = $is_partially_redeemed ? '<small class="emp_post text-truncate text-muted">' + $original_amount - $bonus + '</small>' : '' ;
-														
+														$remaining = '<small class="emp_post text-truncate text-muted">' + full['remaining'] + '</small>';
+
 												// Creates full output for row
 												return '<div class="d-flex justify-content-left align-items-center">' +
 														'<div class="d-flex flex-column">' +
 														'<span class="emp_name text-truncate fw-bold">' +
 														$bonus +
 														'</span>' +
-														 $remaining+
+														 $remaining +
 														'</div>' +
 														'</div>';
 										}
@@ -972,11 +1054,141 @@
 						order: [[6, "desc"]],
 						displayLength: 10,
 				});
+				
+				//Bulk Transfer
+                $("form#bulk-transfer-form").on('submit', function (e) {
+    
+                    e.preventDefault();
+                    const form = $(this);
+                    const amountInput = form.find('input[name="amount"]');
+                    const amount = parseFloat(amountInput.val());
+    
+                    Swal.fire({
+                        title: "{{__('referral::locale.labels.are_you_sure')}}",
+                        text: "{{__('referral::locale.labels.confirm_bulk_transfer_note')}}",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: "{{ __('referral::locale.labels.confirm_transfer') }}",
+                        customClass: {
+                            confirmButton: 'btn btn-primary',
+                            cancelButton: 'btn btn-outline-danger ms-1'
+                        },
+                        buttonsStyling: false,
+                    }).then(function (result) {
+                        if (result.value) {
+                            let downliner_ids = [],
+                                rows_selected = dataListView.column(1).checkboxes.selected(),
+                                minTransferAmount = {{ ReferralSettings::minTransferRedeemAmount() }};
+                                
+                            if (isNaN(amount) || amount < minTransferAmount) {
+                                showToast('error', `Amount must be at least ${minTransferAmount}`)
+                                return;
+                            }
+                                
+                            $.each(rows_selected, function (index, rowId) {
+                                downliner_ids.push(rowId)
+                            });
+    
+                            if (downliner_ids.length > 0) {
+    
+                                $.ajax({
+                                    url: "{{ route('referral.customer.bonus.bulk_transfer') }}",
+                                    type: "POST",
+                                    data: {
+                                        _token: "{{csrf_token()}}",
+                                        ids: downliner_ids,
+                                        amount: amount
+                                    },
+                                    success: function (response) {
+                                        console.log(response);
+                                        showToast(response.status, response.message || 'Bonus successfully transferred',
+                                            'Success',
+                                            {
+                                                onHidden: function() {
+                                                    window.location.href = "{{route('referral.index')}}"; 
+                                                }
+                                            }
+                                        );
+                                    },
+                                    error: function (reject) {
+                                        if (reject.status === 422) {
+                                            let errors = reject.responseJSON.errors;
+                                            $.each(errors, function (key, value) {
+                                                toastr['warning'](value[0], "{{__('referral::locale.labels.attention')}}", {
+                                                    closeButton: true,
+                                                    positionClass: 'toast-top-right',
+                                                    progressBar: true,
+                                                    newestOnTop: true,
+                                                    rtl: isRtl
+                                                });
+                                            });
+                                        } else {
+                                            toastr['warning'](reject.responseJSON.message, "{{__('referral::locale.labels.attention')}}", {
+                                                closeButton: true,
+                                                positionClass: 'toast-top-right',
+                                                progressBar: true,
+                                                newestOnTop: true,
+                                                rtl: isRtl
+                                            });
+                                        }
+                                    }
+                                })
+                            } else {
+                                toastr['warning']("{{__('referral::locale.labels.at_least_one_data')}}", "{{__('referral::locale.labels.attention')}}", {
+                                    closeButton: true,
+                                    positionClass: 'toast-top-right',
+                                    progressBar: true,
+                                    newestOnTop: true,
+                                    rtl: isRtl
+                                });
+                            }
+    
+                        }
+                    })
+                });
 
 				$("body").on('click', '.copy', function (e) {
 					e.preventDefault()
 					copyToClipboard($(this).data('text'));
 				})
+				
+				sanitizePhone($('input[id=phone]'))
+
+                $('input[id=phone]').on('change keyup paste', function() {
+                  sanitizePhone($(this))
+                });
+            
+                function sanitizePhone(element) {
+                  let $phone = element.val(),
+                    $submitBtn = element.closest('form').find(':submit');
+                  const regex = new RegExp("^0+(?!$)", 'g')
+            
+                  $submitBtn.prop('disabled', true)
+                  //remove non-numeric characters
+                  if ($phone.length > 0 && !$phone.match(/^\d+$/)) {
+                    showToast("info", "{{ __('referral::locale.labels.only_numbers') }}")
+                    element.val($phone.replace(/\D/g, ''));
+                  }
+            
+                  // prevent leading zeros
+                  if ($phone.length > 1 && $phone.match(regex)) {
+                    showToast("info", "{{ __('referral::locale.labels.no_leading_zeros') }}")
+                    element.val($phone.replaceAll(regex, ""));
+                  }
+                  $submitBtn.prop('disabled', false)
+                }
+                
+                function showToast(type, message, title = "{{ __('referral::locale.labels.attention') }}", options = {}) {
+                    const defaults = {
+                        closeButton: true,
+                        positionClass: 'toast-top-right',
+                        progressBar: true,
+                        newestOnTop: true,
+                        rtl: isRtl
+                    };
+                    
+                    toastr[type](message, title, {...defaults, ...options});
+                }
 			});
 </script>
 @endsection

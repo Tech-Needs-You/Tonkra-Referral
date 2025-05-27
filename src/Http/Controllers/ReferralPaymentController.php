@@ -47,6 +47,7 @@ use Selcom\ApigwClient\Client;
 use SimpleXMLElement;
 use Stripe\Exception\ApiErrorException;
 use Stripe\StripeClient;
+use Tonkra\Referral\Models\ReferralInvoice;
 use Tonkra\Referral\Models\ReferralSubscriptionTransaction;
 use Tonkra\Referral\Models\ReferralUser;
 use Tonkra\Referral\Services\ReferralPaymentService;
@@ -2464,11 +2465,15 @@ class ReferralPaymentController extends Controller
 
                                 $subscription = $user->customer->activeSubscription();
 
-                                $subscription->addTransaction(SubscriptionTransaction::TYPE_SUBSCRIBE, [
+                                $transaction = $subscription->addTransaction(SubscriptionTransaction::TYPE_SUBSCRIBE, [
                                     'status' => SubscriptionTransaction::STATUS_SUCCESS,
                                     'title'  => 'Add ' . $sms_unit . ' sms units',
                                     'amount' => $sms_unit . ' sms units',
                                     'invoice_id'             => $invoice->id,
+                                ]);
+                                
+                                $invoice->update([
+                                    'transaction_id' => $transaction->uid,
                                 ]);
 
 
@@ -2829,11 +2834,12 @@ class ReferralPaymentController extends Controller
     {
 
         $paymentMethod = PaymentMethods::where('status', true)->where('type', PaymentMethods::TYPE_PAYSTACK)->first();
+        
         if ($paymentMethod) {
             $credentials = json_decode($paymentMethod->options);
 
             $curl      = curl_init();
-            $reference = $request->reference;
+            $reference = $request->input('reference') ?? $request->input('trxref');
             if (! $reference) {
                 return redirect()->route('user.home')->with([
                     'status'  => 'error',
@@ -2925,7 +2931,7 @@ class ReferralPaymentController extends Controller
 
                     $invoice = Invoices::create([
                         'user_id'        => $user->id,
-                        'currency_id'    => $user->customer->subscription->plan->currency->id,
+                        'currency_id'    => $user->user->customer->subscription->plan->currency->id,
                         'payment_method' => $paymentMethod->id,
                         'amount'         => $tranx->data->metadata->price,
                         'type'           => Invoices::TYPE_SUBSCRIPTION,
@@ -2941,7 +2947,7 @@ class ReferralPaymentController extends Controller
                             $user->save();
                         }
 
-                        $subscription = $user->customer->activeSubscription();
+                        $subscription = $user->user->customer->activeSubscription();
 
                         $transaction = $subscription->addTransaction(ReferralSubscriptionTransaction::TYPE_TOPUP, [
                             'status' => ReferralSubscriptionTransaction::STATUS_SUCCESS,
@@ -2949,9 +2955,13 @@ class ReferralPaymentController extends Controller
                             'amount' => $tranx->data->metadata->sms_unit . ' sms units',
                             'invoice_id'             => $invoice->id,
                         ]);
-
-                        if ($user->referrer) {
-                            $this->referralPaymentService->processReferralBonus($user, $transaction);
+                        
+                        $invoice->update([
+                            'transaction_id' => $transaction->uid,
+                        ]);
+                        
+                        if ($user->referrer && $user->referrer?->preferences?->preferences?->get('referral')['status']) {
+                            $this->referralPaymentService->processReferralBonus($user, ReferralInvoice::find($invoice->id));
                         }
 
                         return redirect()->route('user.home')->with([
@@ -3038,7 +3048,7 @@ class ReferralPaymentController extends Controller
                 if ($request_type == 'subscription_payment') {
 
                     $plan = Plan::where('uid', $tranx->data->metadata->plan_id)->first();
-                    $user = User::find($tranx->data->metadata->user_id);
+                    $user = ReferralUser::find($tranx->data->metadata->user_id);
                     $userBalance = $user->sms_unit;
 
                     if ($plan) {
@@ -3092,6 +3102,10 @@ class ReferralPaymentController extends Controller
                                 'invoice_id'             => $invoice->id,
                             ]);
 
+                            $invoice->update([
+                                'transaction_id' => $transaction->uid,
+                            ]);
+
                             // add log
                             $subscription->addLog(SubscriptionLog::TYPE_ADMIN_PLAN_ASSIGNED, [
                                 'plan'  => $subscription->plan->getBillableName(),
@@ -3108,8 +3122,8 @@ class ReferralPaymentController extends Controller
 
                             $this->createNotification('plan', $plan->name, $user->displayName());
 
-                            if ($user->referrer) {
-                                $this->referralPaymentService->processReferralBonus($user, $transaction);
+                            if ($user->referrer && $user->referrer?->preferences?->preferences?->get('referral')['status']) {
+                                $this->referralPaymentService->processReferralBonus($user, ReferralInvoice::find($invoice->id), $plan->getOption('sms_max'));
                             }
 
                             return redirect()->route('customer.subscriptions.index')->with([

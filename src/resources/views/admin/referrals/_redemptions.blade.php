@@ -2,7 +2,7 @@
 	use Tonkra\Referral\Models\ReferralRedemption;
 @endphp
 
-<div class="row p-1 d-block d-md-none">
+<div class="row p-1 pt-0 d-block d-md-none">
 	@foreach ([ReferralRedemption::PAYOUT_SMS, ReferralRedemption::PAYOUT_WALLET, ReferralRedemption::PAYOUT_BANK, ReferralRedemption::PAYOUT_TRANSFER] as $type)
 		<div class="col-lg-3 col-md-3 mb-1">
 			<div class="stat-card bg-light-primary p-1 rounded-3">
@@ -22,7 +22,7 @@
 
 
 
-<div class="row justify-content-center p-1">
+<div class="row justify-content-center p-1 pt-0">
 	<div class="row d-none d-md-block">
 		<div class="col-12 d-flex flex-wrap justify-content-between align-items-center">
 			@foreach ([ReferralRedemption::PAYOUT_SMS, ReferralRedemption::PAYOUT_WALLET, ReferralRedemption::PAYOUT_TRANSFER] as $type)

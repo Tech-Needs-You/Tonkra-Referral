@@ -488,7 +488,7 @@ class EloquentReferralAccountRepository extends EloquentReferralBaseRepository i
                 case PaymentMethods::TYPE_PAYSTACK:
 
                     $curl = curl_init();
-
+                    
                     curl_setopt_array($curl, [
                         CURLOPT_URL            => 'https://api.paystack.co/transaction/initialize',
                         CURLOPT_RETURNTRANSFER => true,
@@ -500,7 +500,7 @@ class EloquentReferralAccountRepository extends EloquentReferralBaseRepository i
                                 'sms_unit'     => $sms_unit,
                                 'price'        => $price,
                                 'tax_amount'   => $taxAmount,
-                                'user_id'      => ReferralUser::find(auth()->id())->id,
+                                'user_id'      => auth()->user()->id,
                                 'request_type' => 'top_up_payment',
                             ],
                         ]),

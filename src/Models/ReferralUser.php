@@ -14,6 +14,11 @@ class ReferralUser extends User
 {
 	protected $table = 'users';
 
+    public static function getByUid(string $uid)
+    {
+        return self::where('uid', $uid)->first();
+    }
+    
 	/**
 	 * Define a relationship with the Referral model.
 	 */
@@ -31,6 +36,11 @@ class ReferralUser extends User
 	{
 		return $this->hasMany(ReferralBonus::class, 'to', 'id');
 	}
+	
+    public function getDisplayNameAttribute()
+    {
+        return $this->user->displayName();
+    }
 
 	public function paidReferralBonuses(): HasMany
 	{
@@ -355,21 +365,6 @@ class ReferralUser extends User
 	{
 		return $this->hasOne(UserPreference::class, 'user_id', 'id');
 	}
-
-	// public function totalEarnedBonuses()
-	// {
-	// 	return $this->referralBonuses()
-	// 		->whereNotNull('original_amount')
-	// 		->selectRaw('SUM(original_amount) as total')
-	// 		->value('total') ?? 0;
-	// }
-
-	// public function totalRedeemedBonuses()
-	// {
-	// 	return $this->hasMany(ReferralRedemption::class)
-	// 		->where('status', 'processed')
-	// 		->sum('amount');
-	// }
 
 	public function getPreferencesAttribute()
 	{

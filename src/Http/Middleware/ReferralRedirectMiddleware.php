@@ -16,11 +16,10 @@ class ReferralRedirectMiddleware
 		}
 
 		if (ReferralSettings::status() && $request->path() === 'callback/paystack') {
-			return redirect()->route('referral.customer.callback.paystack');
-		}
-
-		if (ReferralSettings::status() && $request->is('admin/invoices')) {
-			return redirect()->route('referral.admin.invoices');
+		    return redirect()->route('referral.customer.callback.paystack', [
+                'trxref' => $request->query('trxref'),
+                'reference' => $request->query('reference'),
+            ]);
 		}
 
 		if (ReferralSettings::status() && $request->is('admin/invoices/*/approve')) {

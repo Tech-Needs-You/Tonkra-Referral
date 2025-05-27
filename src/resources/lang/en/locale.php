@@ -31,16 +31,20 @@ return [
 		'bulk_cancel'     										 => 'Cancel',
 		'bulk_disable'    										 => 'Disable',
 		'showing_entries' 										 => 'Showing :start to :end of :total entries',
-		'bulk_top_up'													 => 'Top Up',
-		'bulk_flag'														 => 'Flag',
+		'bulk_top_up'											 => 'Top Up',
+		'bulk_flag'												 => 'Flag',
 	],
 
 	'labels' => [
-		'account' 															=> 'Account',
+		'account' 								=> 'Account',
 		'actions'                               => 'Actions',
 		'active'                               	=> 'Active',
-		'attention'                             => 'Attention',
+		'are_you_sure'                          => 'Are you sure?',
+		'at_least_one_data'                     => 'Please select at least one data',
+		'attention'                     => 'Attention',
 		'balance'                               => 'Balance',
+		'confirm_transfer'                      => 'Confirm Transfer',
+		'confirm_bulk_transfer_note'            => 'Do you want to transfer to these downliners?',
 		'created_at'                            => 'Created at',
 		'disable'                              	=> 'Disable',
 		'disabled'                              => 'Disabled',
@@ -50,6 +54,7 @@ return [
 		'enabled' 															=> 'Enabled',
 		'earnings' 															=> 'Earnings',
 		'first_name' 														=> 'First Name',
+		'hide' 														=> 'Hide',
 		'joined'                    			 			=> 'Joined',
 		'id'                    			 					=> 'ID',
 		'invoices'                    			 		=> 'Invoices',
@@ -70,11 +75,13 @@ return [
 		'referral_settings' 										=> 'Referral Settings',
 		'referrer' 															=> 'Referrer',
 		'select'                                => 'Select',
+		'show'                                => 'Show',
 		'status'                                => 'Status',
 		'thanks' 																=> 'Thanks',
 		'view' 																	=> 'View',
 		'yes' 																	=> 'Yes',
 		'stats' 																=> 'Stats',
+		'upliner' 																=> 'Upliner',
 	],
 
 	'menu' => [
@@ -94,6 +101,7 @@ return [
 		'activate_referral_note' 												=> 'Deactivating referrals will prevent future bonus rewards.',
 		'announcement_title' 														=> 'Referral System',
 		'announcement_description' 											=> 'Referral system has been :status',
+		'available_bonus' 											=> 'Available Bonus',
 		'bonus' 																				=> 'Bonus',
 		'deactivated' 																	=> 'Deactivated',
 		'default_senderid' 															=> 'Default Sender ID',
@@ -109,10 +117,11 @@ return [
 		'receive_sms_referral_notification' 						=> 'Receive Referral SMS',
 
 		// tags may include (app_name, upliner_name, downliner_name, transaction_type, bonus, available_bonus, date, url)
-		'referral_bonus_sms_message' 										=> 'Hi {upliner_name}, You have been awarded a {transaction_type} bonus of {bonus} from your downliner {downliner_name} on {app_name}. Your available bonus is {available_bonus}', 
+		'referral_bonus_sms_message' 										=> 'Hi {upliner_name}, You have earned a bonus of {bonus} from your downliner {downliner_name}. Your available bonus is {available_bonus}', 
 		
 		'referral_link_copied' 													=> 'Referral link copied',
 		'referral_not_active' 													=> 'Sorry! Referral system not active',
+		'referrals' 													        => 'Referrals',
 		'sms_notification' 															=> 'SMS Referral Notification',
 		'upliner' 																			=> 'Upliner',
 		'upliner_info' 																	=> 'Upliner',
@@ -123,6 +132,8 @@ return [
 	],
 
 	'referral_bonuses' => [
+		'account_number' 											=> 'Account Number',
+		'amount_left_notice' 											=> ':amount remaining',
 		'available' 															=> 'Available',
 		'bonus_successfully_redeemed'							=> 'Bonus of :bonus successfully :type',
 		'earned' 																	=> 'Total',
@@ -136,6 +147,7 @@ return [
 		'minimum_withdrawal_redemption_status'		=> 'Minimum Withdrawal Redemption Status',
 		'pending' 																=> 'Pending',
 		'paid' 																		=> 'Available',
+		'partly redeemed' 													=> 'Partly Redeemed',
 		'rejected' 																=> 'Rejected',
 		'redeem' 																	=> 'Redeem',
 		'redeemed' 																=> 'Redeemed',
@@ -143,6 +155,7 @@ return [
 		'redemption_rate'													=> 'Redemption Rate',
 		'subscribe'																=> 'Subscription',
 		'top_up'																	=> 'Top Up',
+		'total_amount_notice'																	=> 'Total: :amount',
 	],
 
 	'referral_redemptions' => [
@@ -157,7 +170,7 @@ return [
 		'processed_at' 														=> 'Processed At',
 		'processing' 															=> 'Processing',
 		'redemption_not_available' 								=> 'Redemption does not exist',
-		'redemption_successfully_updated' 				=> 'Redemption successfully updated',
+		'redemption_successfully_updated' 				    => 'Redemption successfully updated',
 		'request_id' 															=> 'Request ID',
 		'sms_unit' 																=> 'SMS Unit',
 		'status' 																	=> 'Status',

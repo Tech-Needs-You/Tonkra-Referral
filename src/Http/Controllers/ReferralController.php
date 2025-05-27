@@ -3,7 +3,6 @@
 namespace Tonkra\Referral\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Library\Tool;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Http\JsonResponse;
@@ -18,6 +17,7 @@ use Intervention\Image\Facades\Image;
 use Tonkra\Referral\Facades\ReferralSettings;
 use Tonkra\Referral\Helpers\Helper;
 use Tonkra\Referral\Http\Requests\StoreAdminReferralSetiingsRequest;
+use Tonkra\Referral\Library\Tool;
 use Tonkra\Referral\Models\Referral;
 use Tonkra\Referral\Models\ReferralBonus;
 use Tonkra\Referral\Models\ReferralRedemption;
@@ -148,7 +148,8 @@ class ReferralController extends Controller
 	 * @return void
 	 * @throws AuthorizationException
 	 */
-	#[NoReturn] public function downliners(Request $request, ?ReferralUser $user = null): void
+	#[NoReturn]
+	public function downliners(Request $request, ?ReferralUser $user = null): void
 	{
 
 		$columns = [
@@ -215,7 +216,7 @@ class ReferralController extends Controller
 				$nestedData['responsive_id'] = '';
 				$nestedData['uid']           = $downliner->uid;
 				$nestedData['avatar']        = route('referral.user.user_avatar', $downliner->uid);
-				$nestedData['earned_bonus']         = number_format($user->totalEarnedBonusFromUser($downliner));
+				$nestedData['earned_bonus']         = (int)$user->totalEarnedBonusFromUser($downliner);
 				$nestedData['name']          = $downliner->displayName();
 				$nestedData['id']               = $downliner->uid;
 				$nestedData['created_at']    = __('referral::locale.labels.joined') . ': ' . Tool::formatDate($downliner->created_at);
@@ -259,7 +260,8 @@ class ReferralController extends Controller
 	 * @return void
 	 * @throws AuthorizationException
 	 */
-	#[NoReturn] public function redemptions(Request $request, ?ReferralUser $user = null): void
+	#[NoReturn]
+	public function redemptions(Request $request, ?ReferralUser $user = null): void
 	{
 
 		$columns = [
@@ -376,7 +378,8 @@ class ReferralController extends Controller
 	 *
 	 * @return void
 	 */
-	#[NoReturn] public function searchRedemptions(Request $request): void
+	#[NoReturn] 
+	public function searchAdminRedemptions(Request $request): void
 	{
 		$columns = [
 			0  => 'responsive_id',
@@ -486,7 +489,8 @@ class ReferralController extends Controller
 	 *
 	 * @return void
 	 */
-	#[NoReturn] public function earnings(Request $request): void
+	#[NoReturn]
+	public function earnings(Request $request): void
 	{
 		$columns = [
 			0  => 'responsive_id',
@@ -536,19 +540,24 @@ class ReferralController extends Controller
 				ReferralBonus::STATUS_REDEEMED => ['color' => 'success', 'icon' => 'fa fa-star'],
 				ReferralBonus::STATUS_REJECTED => ['color' => 'danger', 'icon' => 'fa fa-thumbs-down'],
 			];
+			
+			$is_partially_redeemed = ($earning->status == ReferralBonus::STATUS_PARTLY_REDEEMED && $earning->original_amount != null);
+			$remaining = $is_partially_redeemed ? (int) $earning->bonus : '';
+			
 			return [
 				'responsive_id' => '',
 				'uid' => $earning->uid,
 				'from' => $earning->fromUser->displayName(),
 				'isAdmin' => $earning->fromUser->isAdmin(),
-				'avatar' => route('admin.customers.avatar', $earning->fromUser->uid),
-				'bonus' => $earning->bonus,
+				'avatar' => route('referral.user.user_avatar', $earning->fromUser->uid),
+				'bonus' => $is_partially_redeemed ? (int) $earning->original_amount : (int) $earning->bonus,
 				'created_at' => Tool::customerDateTime($earning->created_at),
-				'is_partially_redeemed' => ($earning->status == ReferralBonus::STATUS_PARTLY_REDEEMED && $earning->original_amount != null),
-				'original_amount' => $earning->original_amount,
+				'is_partially_redeemed' => $is_partially_redeemed,
+				'original_amount' => (int) $earning->original_amount,
+				'remaining' => $is_partially_redeemed ? __('referral::locale.referral_bonuses.amount_left_notice', ['amount' => $remaining]) : '',
 				'type' => __('referral::locale.referral_bonuses.' . $earning->transaction->type),
 				'actual_status' => $earning->status,
-				'status' => '<span class="badge badge-sm bg-' . ($statuses[$earning->status]['color'] ?? 'dark') . '"><i class="' . $statuses[$earning->status]['icon'] . '"></i><b class="d-none">' . __('referral::locale.referral_earnings.' . strtolower($earning->status), [], $earning->status) . '</b></span>',
+				'status' => '<span class="badge badge-sm bg-' . ($statuses[$earning->status]['color'] ?? 'dark') . '" title="'. __('referral::locale.referral_bonuses.' . strtolower($earning->status), [], $earning->status) .'"><i class="' . $statuses[$earning->status]['icon'] . '"></i>&nbsp;<b class="d-none d-xl-inline-block">' . __('referral::locale.referral_bonuses.' . strtolower($earning->status), [], $earning->status) . '</b></span>',
 			];
 		});
 
@@ -607,121 +616,150 @@ class ReferralController extends Controller
 	 * @return void
 	 * @throws AuthorizationException
 	 */
-	#[NoReturn] public function searchReferrals(Request $request, ?ReferralUser $user = null): void
-	{
-		$columns = [
-			0 => 'responsive_id',
-			1 => 'uid',
-			2 => 'uid',
-			3 => 'name',
-			4 => 'downliner_count',
-			5 => 'earned_bonus',
-			6 => 'balance',
-			7 => 'status',
-			8 => 'created_at',
-			9 => 'action',
-		];
-
-		$isAdmin = auth()->user()->isAdmin() && auth()->user()->active_portal == 'admin';
-		$user = $isAdmin ? null : ($user ?? ReferralUser::find(auth()->id()));
-
-		// Base query differs for  admin vs regular users
-		$query = $isAdmin ? ReferralUser::has('downliners') : $user->downliners();
-
-		$totalData = $query->count();
-		$totalFiltered = $totalData;
-
-		$limit = $request->input('length');
-		$start = $request->input('start');
-		$order = $columns[$request->input('order.0.column')];
-		$dir = $request->input('order.0.dir');
-
-		if (empty($request->input('search.value'))) {
-
-			$users = $query->with([
-				'referrer',
-				'downliners' => function ($q) {
-					// Use the relationship's qualified column names
-					$q->select([
-						$q->getQuery()->from . '.id',
-						'referred_by'
-					]);
-				}
-			])
-				->offset($start)
-				->limit($limit)
-				->orderBy($order, $dir)
-				->get();
-		} else {
-			$search = $request->input('search.value');
-
-			$users = $query->with([
-				'referrer',
-				'downliners' => function ($q) {
-					$q->select([$q->getQuery()->from . '.id', 'referred_by']);
-				}
-			])
-				->offset($start)
-				->limit($limit)
-				->orderBy($order, $dir)
-				->get();
-
-			$totalFiltered = $query->whereLike(['uid', 'first_name', 'last_name', 'status', 'email'], $search)->count();
-		}
-
-		$data = [];
-		if (!empty($users)) {
-			foreach ($users as $downliner) {
-				$topup = __('referral::locale.buttons.top_up');
-				$report = __('referral::locale.buttons.report');
-				$copy = __('referral::locale.buttons.copy_referral_code');
-
-				$status_label = $downliner->status
-					? __('referral::locale.labels.active')
-					: __('referral::locale.labels.inactive');
-				$status_color = $downliner->status ? 'text-success' : 'text-danger';
-				$status = $downliner->status ? 'toggle-right' : 'toggle-left';
-
-				$nestedData = [
-					'responsive_id' => '',
-					'uid' => $downliner->uid,
-					'avatar' => route('referral.user.user_avatar', $downliner->uid),
-					'earned_bonus' => $isAdmin
-						? number_format($downliner->totalEarnedBonus())
-						: number_format($user->totalEarnedBonusFromUser($downliner)),
-					'name' => $downliner->displayName(),
-					'user_id' => '<a href="' . route('admin.customers.show', $downliner->user->uid) . '" class="text-primary mr-1">' . $downliner->user->displayName() . '</a>',
-					'id' => $downliner->uid,
-					'created_at' => __('referral::locale.labels.joined') . ': ' . Tool::formatDate($downliner->created_at),
-					'referrer' => $isAdmin && $downliner->referrer ? $downliner->referrer->displayName() : null,
-					'downliner_count' => $downliner->downliners->count(),
-					'status' => $status,
-					'status_color' => $status_color,
-					'status_label' => $status_label,
-					'balance' => number_format($downliner->sms_unit),
-					'copy' => $downliner->referralCode(),
-					'copy_label' => $copy,
-					'report' => $downliner->uid,
-					'report_label' => $report,
-					'top_up' => $downliner->uid,
-					'top_up_label' => $topup,
-					'super_user' => $downliner->id == 1,
-					'is_admin' => auth()->user()->isAdmin(),
-					'url' => route('admin.customers.show', ['customer' => $downliner->uid])
-				];
-
-				$data[] = $nestedData;
-			}
-		}
-
-		echo json_encode([
-			"draw" => intval($request->input('draw')),
-			"recordsTotal" => $totalData,
-			"recordsFiltered" => $totalFiltered,
-			"data" => $data,
-		]);
-		exit();
-	}
+    #[NoReturn] 
+    public function searchAdminReferrals(Request $request): void
+    {
+        // Verify admin access
+        if (!auth()->user()->isAdmin() || auth()->user()->active_portal !== 'admin') {
+            abort(403, 'Unauthorized action.');
+        }
+    
+        $columns = [
+            0 => 'responsive_id',   // not sortable
+            1 => 'uid',
+            2 => 'name',            // user.first_name + user.last_name (sort by first_name)
+            3 => 'upliner',         // referrer.user.first_name (sort by referrer_user.first_name)
+            4 => 'downliner_count', // downliners_count
+            5 => 'available_bonus', // available_bonus
+            6 => 'balance',         // user.sms_unit
+            7 => 'status',
+            8 => 'created_at',
+            9 => 'action',          // not sortable
+        ];
+        
+        $hasSearch = $request->filled('search');
+        $search = $request->input('search.value');
+        $limit = $request->input('length');
+        $start = $request->input('start');
+        $orderIndex = (int) $request->input('order.0.column');
+        $orderDir = $request->input('order.0.dir') === 'desc' ? 'desc' : 'asc';
+        
+        $orderColumn = $columns[$orderIndex] ?? 'created_at';
+        
+        $query = ReferralUser::with([
+                'referrer.user:id,uid,first_name,last_name',
+                'downliners',
+            ])
+            ->withCount(['downliners as downliners_count'])
+            ->withSum(['paidReferralBonuses as available_bonus'], 'bonus')
+            ->leftJoin('referrals', 'users.id', '=', 'referrals.user_id')
+            ->leftJoin('users as referrer_users', 'referrals.referred_by', '=', 'referrer_users.id')
+            ->select('users.*');
+        
+        $totalData = $query->count();
+        $totalFiltered = $totalData;
+        
+        // Fix the order column to use the correct table
+        $orderableColumns = [
+            'uid' => 'users.uid',
+            'name' => 'users.first_name',
+            'upliner' => 'referrer_users.first_name',
+            'downliner_count' => 'downliners_count',
+            'available_bonus' => 'available_bonus',
+            'balance' => 'users.sms_unit',
+            'status' => 'users.status',
+            'created_at' => 'users.created_at',
+        ];
+        
+        if($hasSearch){
+             $query->where(function($q) use ($search, $orderableColumns) {
+                $q->where('users.uid', 'like', "%{$search}%")
+                  ->orWhere('users.first_name', 'like', "%{$search}%")
+                  ->orWhere('users.last_name', 'like', "%{$search}%")
+                  ->orWhereHas('user', function($q) use ($search) {
+                      $q->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"]);
+                  })
+                  ->orWhere($orderableColumns['balance'], 'like', "%{$search}%")
+                  ->orWhere($orderableColumns['status'], 'like', "%{$search}%")
+                  
+                  // Search in referrer fields
+                  ->orWhereHas('referrer.user', function($q) use ($search) {
+                      $q->where('uid', 'like', "%{$search}%")
+                        ->orWhere('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%")
+                        ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"]);
+                  })
+                  
+                  // Search in upliner name (from joined table)
+                  ->orWhere($orderableColumns['upliner'], 'like', "%{$search}%")
+                  
+                  // Search downliners_count (using having clause)
+                  ->orHaving('downliners_count', 'like', "%{$search}%")
+                  
+                  // Search available_bonus (using having clause)
+                  ->orHaving('available_bonus', 'like', "%{$search}%");
+                });
+            
+            $totalFiltered = $query->count();
+        }
+        
+        $users = $query->offset($start)
+                        ->limit($limit)
+                        ->orderBy($orderableColumns[$orderColumn], $orderDir)
+                        ->get();
+    
+        $data = [];
+        foreach ($users as $user) {
+            $hasReferrer = $user->referrer !== null;
+            $referrer = $hasReferrer ? $user->referrer->user : null;
+            $isSuperUser = $user->id == 1;
+            
+            $data[] = [
+                'responsive_id' => '',
+                'uid' => $user->uid,
+                'avatar' => route('referral.user.user_avatar', $user->uid),
+                'earned_bonus' => __('referral::locale.referral_bonuses.total_amount_notice', [
+                    'amount' => (int)$user->totalEarnedBonus()
+                ]),
+                'available_bonus' => number_format($user->paidReferralBonuses()->sum('bonus')),
+                'name' => $user->displayName(),
+                'user_id' => '<a href="'.route('admin.customers.show', $user->user->uid).'" class="text-primary mr-1">'.$user->user->displayName().'</a>',
+                'id' => $user->uid,
+                'created_at' => __('referral::locale.labels.joined').': '.Tool::formatDate($user->created_at),
+                'hasReferrer' => $hasReferrer,
+                'referrer' => $hasReferrer 
+                    ? ($referrer->isAdmin()
+                        ? $user->referrer->displayName()
+                        : '<a href="'.route('admin.customers.show', $referrer->uid).'" class="text-primary mr-1">'.$referrer->displayName().'</a>')
+                    : null,
+                'referrer_avatar' => $hasReferrer ? route('referral.user.user_avatar', $referrer->uid) : null,
+                'downliner_count' => $user->downliners->count(),
+                'status' => $user->status ? 'toggle-right' : 'toggle-left',
+                'status_color' => $user->status ? 'text-success' : 'text-danger',
+                'status_label' => $user->status 
+                    ? __('referral::locale.labels.active') 
+                    : __('referral::locale.labels.inactive'),
+                'balance' => number_format($user->sms_unit),
+                'copy' => $user->referralCode(),
+                'copy_label' => __('referral::locale.buttons.copy_referral_code'),
+                'report' => $user->uid,
+                'report_label' => __('referral::locale.buttons.report'),
+                'top_up' => $user->uid,
+                'top_up_label' => __('referral::locale.buttons.top_up'),
+                'super_user' => $isSuperUser,
+                'is_admin' => true,
+                'url' => route('admin.customers.show', $user->uid)
+            ];
+        }
+    
+        echo json_encode([
+            "draw" => intval($request->input('draw')),
+            "recordsTotal" => $totalData,
+            "recordsFiltered" => $totalFiltered,
+            "data" => $data,
+        ]);
+        exit();
+    }
 
 	/**
 	 * Save user referral preferences 
@@ -923,7 +961,72 @@ class ReferralController extends Controller
 
 		return redirect()->route('referral.index')->with([
 			'status'  => 'success',
-			'message' => __('referral::locale.referral_bonuses.bonus_successfully_redeemed', ['bonus' => $validated['amount'], 'type' => 'redeemed']),
+			'message' => __('referral::locale.referral_bonuses.bonus_successfully_redeemed', ['bonus' => $validated['amount'], 'type' => 'transfered']),
+		]);
+	}
+
+	public function BulkTransferBonus(Request $request) : JsonResponse
+	{
+		if (config('app.stage') == 'demo') {
+			return redirect()->route('referral.admin.settings')->with([
+				'status'  => 'error',
+				'message' => 'Sorry! This option is not available in demo mode',
+			]);
+		}
+
+		if (!ReferralSettings::minTransferRedeemStatus()) {
+			return redirect()->back()->with([
+				'status'  => 'error',
+				'message' => 'Sorry! Transfer redemption is not available at the moment',
+			]);
+		}
+		
+
+		$user = ReferralUser::find(Auth::user()->id);
+		$availableBonusAmount = $user->paidReferralBonuses()->sum('bonus');
+		$minTransferAmount = ReferralSettings::minTransferRedeemAmount();
+		$numberOfRecipients = count($request->input('ids', []));
+		
+		$validated  = $request->validate([
+			'ids'    => 'required|array|min:1',
+            'ids.*'  => 'required|string|exists:users,uid',
+			'amount' => [
+                'bail', // Stop after first failure
+                'required',
+                'numeric',
+                'min:'. $minTransferAmount,
+                function ($attribute, $value, $fail) use ($request, $availableBonusAmount, $numberOfRecipients) {
+                    $totalMin = $value * $numberOfRecipients;
+
+                    if ($availableBonusAmount < $totalMin) {
+                        $fail(sprintf(
+                            "Minimum amount required: %s (%s × %d recipients)",
+                            Tool::format_number($totalMin),
+                            Tool::format_number($value),
+                            $numberOfRecipients
+                        ));
+                    }
+                },
+                'max:' . $availableBonusAmount
+            ],
+		]);
+		
+		$totalMin = $validated['amount'] * $numberOfRecipients;
+		$recipients = ReferralUser::whereIn('uid', $validated['ids'])->get();
+		
+		foreach($recipients as $recipient){
+    		$payoutDetails = [
+    			'recipient' => $recipient->referralCode(),
+    		];
+    
+    		$result = $this->referralPaymentService->redeemBonuses($user, $validated['amount'], ReferralRedemption::PAYOUT_TRANSFER, $payoutDetails);
+		    
+		}
+
+
+		return response()->json([
+			'status'  => 'success',
+			'message' => __('referral::locale.referral_bonuses.bonus_successfully_redeemed', ['bonus' => Tool::format_number($totalMin), 'type' => 'transfered']),
 		]);
 	}
 }

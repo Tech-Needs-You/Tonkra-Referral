@@ -37,6 +37,7 @@ Route::middleware(['web'])->name('referral.')->group(function () {
 		Route::post('bonus/redeem', [ReferralController::class, 'redeemBonus'])->name('bonus.redeem');
 		Route::post('bonus/withdraw', [ReferralController::class, 'withdrawBonus'])->name('bonus.withdraw');
 		Route::post('bonus/transfer', [ReferralController::class, 'transferBonus'])->name('bonus.transfer');
+		Route::post('bonus/bulk-transfer', [ReferralController::class, 'BulkTransferBonus'])->name('bonus.bulk_transfer');
 
 		Route::post('redemptions/search', [ReferralController::class, 'redemptions'])->name('redemptions.search');
 		Route::post('earnings/search', [ReferralController::class, 'earnings'])->name('earnings.search');
@@ -52,9 +53,9 @@ Route::middleware(['web'])->name('referral.')->group(function () {
 		Route::post('/referral', [ReferralController::class, 'storeAdminReferralSettings'])->name('setting.store');
 		Route::get('invoice', [ReferralInvoiceController::class, 'index'])->name('invoices');
 		Route::get('invoice/{invoice}/approve', [ReferralInvoiceController::class, 'approve'])->name('invoices.approve');
-		Route::post('redemptions/search', [ReferralController::class, 'searchRedemptions'])->name('redemptions.search');
-		Route::post('referral/search', [ReferralController::class, 'searchReferrals'])->name('referrals.search');
-		Route::get('redemptions/{redemption}/show', [ReferralInvoiceController::class, 'showRedemption'])->name('redemptions.show');
+		Route::post('redemptions/search', [ReferralController::class, 'searchAdminRedemptions'])->name('redemptions.search');
+		Route::post('referral/search', [ReferralController::class, 'searchAdminReferrals'])->name('referrals.search');
+		Route::get('redemptions/{redemption}/show', [ReferralInvoiceController::class, 'showAdminRedemption'])->name('redemptions.show');
 		Route::put('redemptions/{redemption}/update-status', [ReferralController::class, 'updateRedemptionStatus'])->name('redemptions.update-status');
 	});
 });

@@ -2,12 +2,12 @@
 
 namespace Tonkra\Referral\Notifications;
 
-use App\Library\Tool;
 use App\Models\EmailTemplates;
 use App\Models\Invoices;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Tonkra\Referral\Library\Tool;
 use Tonkra\Referral\Models\ReferralBonus;
 use Tonkra\Referral\Models\ReferralUser;
 

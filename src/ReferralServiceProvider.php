@@ -34,7 +34,7 @@ class ReferralServiceProvider extends ServiceProvider
 		$this->registerTranslations();
 		$this->registerRoutes();
 		$this->registerEvents();
-		$this->registerBladeDirectives(); 
+		$this->registerBladeDirectives();
 		$this->registerMiddleware(); 
 	}
 
@@ -104,7 +104,7 @@ class ReferralServiceProvider extends ServiceProvider
 
 	protected function registerRoutes()
 	{
-		$this->loadRoutesFrom(__DIR__ . '/routes/web.php', 'reerral');
+		$this->loadRoutesFrom(__DIR__ . '/routes/web.php', 'referral');
 		// Route::group($this->routeConfiguration(), function () {
 		// 	$this->loadRoutesFrom(__DIR__ . '/routes/web.php');
 		// });

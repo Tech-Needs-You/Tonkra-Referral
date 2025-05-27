@@ -1,3 +1,5 @@
+@php use Tonkra\Referral\Models\ReferralBonus; use Tonkra\Referral\Facades\ReferralSettings; @endphp
+
 <div class="row p-1">	
 	<div class="card col-md-3">
 			<div class="card-head pt-1">
@@ -109,25 +111,50 @@
 				<!-- Basic table -->
 				<section id="datatables-basic1">
 					<div class="mb-1 mt-1">
-						<div class="btn-group">
-							<button class="btn btn-primary btn-sm fw-bold dropdown-toggle" type="button" id="bulk_actions" data-bs-toggle="dropdown" aria-expanded="false">
-									{{ __('referral::locale.labels.actions') }}
-							</button>
-							<div class="dropdown-menu" aria-labelledby="bulk_actions">
-									<a class="dropdown-item bulk-top_up" href="#" onclick="alert('Under Construction...')"><i data-feather="trending-up" class="text-success">&nbsp;</i> {{ __('referral::locale.datatables.bulk_top_up') }}</a>
-									<a class="dropdown-item bulk-flag" href="#" onclick="alert('Under Construction...')"><i data-feather="flag" class="text-danger">&nbsp;</i> {{ __('referral::locale.datatables.bulk_flag') }}</a>
-							</div>
+						<div class="dropdown w-100">
+								<button type="button" class="btn btn-primary btn-sm dropdown-toggle d-flex align-items-center" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" id="bulkRedeemBonusDropdown">
+										{{__('referral::locale.labels.actions')}}
+								</button>
+								
+								<ul class="dropdown-menu dropdown-menu-end p-2" style="min-width: 320px" aria-labelledby="bulkRedeemBonusDropdown">
+										
+										
+										@if (ReferralSettings::minTransferRedeemStatus())
+											<li>
+												<button type="button" class="btn btn-outline-success w-100 d-flex justify-content-between align-items-center action-trigger" data-target="bulkTransferForm" aria-expanded="false">
+													<span>Transfer to Downliners</span>
+													<i class="fas fa-user-friends ms-2" aria-hidden="true"></i>
+												</button>
+												<div class="dropdown-form p-1 w-100 border border-success mt-2 rounded" id="bulkTransferForm" style="display: none;">
+													<form id="bulk-transfer-form" method="post" action="{{ route('referral.customer.bonus.transfer') }}">
+														@csrf
+														<h6 class="fw-bold text-center mb-2">Transfer to Selected Users</h6>
+														
+														<div class="mb-1">
+															<label for="bulkTransferAmount" class="form-label required">Amount (Available: {{ (int)$referralStats[ReferralBonus::STATUS_PAID]['amount'] }})</label>
+															<input type="number" 
+																		class="form-control" 
+																		id="bulkTransferAmount" 
+																		name="amount" 
+																		min="{{ ReferralSettings::minTransferRedeemAmount() }}" 
+																		max="{{ (int)$referralStats[ReferralBonus::STATUS_PAID]['amount'] }}" 
+																		value="{{ min((int)$referralStats[ReferralBonus::STATUS_PAID]['amount'], max(ReferralSettings::minTransferRedeemAmount(), (int)$referralStats[ReferralBonus::STATUS_PAID]['amount'])) }}"
+																		aria-describedby="bulkTransferHelp">
+															<div id="bulkTransferHelp" class="form-text">Minimum: {{ ReferralSettings::minTransferRedeemAmount() }}</div>
+														</div>
+														<button type="submit" class="btn btn-primary w-100">Transfer</button>
+													</form>
+												</div>
+											</li>
+										@endif
+								</ul>
 						</div>
-	
-						{{-- <div class="btn-group">
-								<a href="{{route('admin.customers.export')}}" class="btn btn-info btn-sm waves-light waves-effect fw-bold"> {{__('referral::locale.buttons.export')}} <i data-feather="file-text"></i></a>
-						</div> --}}
 					</div>
 	
 					<div class="row">
 						<div class="col-12">
 							<div class="card">
-								<table id="downliners-table" class="table datatables-basic-downliners table-sm">
+								<table id="downliners-table" class="table datatables-basic-downliners">
 									<thead>
 										<tr>
 												<th></th>
