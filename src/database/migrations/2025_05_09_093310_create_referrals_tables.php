@@ -57,15 +57,22 @@ return new class extends Migration
             $table->string('request_id')->comment('Use to track how many redemptions came from the same request');
             $table->unsignedBigInteger('referral_bonus_id');
             $table->decimal('amount', 10, 2);
-            $table->enum('status', [ReferralRedemption::STATUS_PENDING, ReferralRedemption::STATUS_PROCESSING, ReferralRedemption::STATUS_COMPLETED, ReferralRedemption::STATUS_FAILED])->default(ReferralRedemption::STATUS_PENDING);
-            $table->string('payout_method'); // 'bank_transfer', 'sms_credit', etc.
+            $table->enum('status', [
+                ReferralRedemption::STATUS_PENDING, 
+                ReferralRedemption::STATUS_PROCESSING, 
+                ReferralRedemption::STATUS_COMPLETED, 
+                ReferralRedemption::STATUS_FAILED
+            ])->default(ReferralRedemption::STATUS_PENDING);
+            $table->string('payout_method');
             $table->json('payout_details')->nullable();
             $table->text('failure_reason')->nullable();
             $table->timestamp('processed_at')->nullable();
             $table->foreignId('processed_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamps();
-
-            $table->index(['status', 'request_id', 'referral_bonus_id']);
+        
+            $table->index(['status', 'request_id', 'referral_bonus_id'],
+                'referral_redemptions_status_request_bonus_id'
+            );
         });
 
     }
