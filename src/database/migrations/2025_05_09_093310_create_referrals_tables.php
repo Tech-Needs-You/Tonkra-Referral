@@ -22,7 +22,6 @@ return new class extends Migration
         });
 
         Schema::create('referrals', function (Blueprint $table) {
-            $table->engine = 'MyISAM';
             $table->id();
             $table->string('uid')->unique();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
@@ -32,7 +31,6 @@ return new class extends Migration
         });
 
         Schema::create('referral_bonuses', function (Blueprint $table) {
-            $table->engine = 'MyISAM';
             $table->id();
             $table->string('uid')->unique();
             $table->foreignId('transaction_id')
@@ -50,7 +48,6 @@ return new class extends Migration
         });
 
         Schema::create('referral_redemptions', function (Blueprint $table) {
-            $table->engine = 'MyISAM';
             $table->id();
             $table->string('uid')->unique();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
@@ -71,7 +68,7 @@ return new class extends Migration
             $table->timestamps();
         
             $table->index(['status', 'request_id', 'referral_bonus_id'],
-                'referral_redemptions_status_request_bonus_id'
+                'referral_redemptions_status_request_bonus_ids'
             );
         });
 
